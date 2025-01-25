@@ -1,6 +1,6 @@
-# BlogYourWay
+# Whoosh
 
-BlogYourWay is a hobby project that serves as a minimal and independent blogging service/personal website.
+Whoosh is a hobby project that serves as a minimal and independent blogging service/personal website.
 
 ## 🚀 Features
 
@@ -8,7 +8,7 @@ BlogYourWay is a hobby project that serves as a minimal and independent blogging
 
 - **Edit**: With markdown editor, writing is easy.
 
-- **All-in-one**: Want to keep it simple? Manage blogposts and projects in one place with Blogyourway.
+- **All-in-one**: Want to keep it simple? Manage blogposts and projects in one place with Whoosh.
 
 - **SEO**: Define unique slug for your posts and projects.
 

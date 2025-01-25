@@ -4,4 +4,4 @@ Disallow: /backstage/
 Disallow: /error
 Disallow: /raise-exception
 
-Sitemap: https://blogyourway.xyz/sitemap.xml
+Sitemap: https://whoosh.blog/sitemap

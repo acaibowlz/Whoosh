@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
-{% block title %}Sign Up - BlogYourWay{% endblock %}
+{% block title %}Sign Up - Whoosh{% endblock %}
 {% block meta_tags %}
   <meta name="description"
         content="Host all your blogposts and projects at one place.">
-  <meta property="og:title" content="Sign Up - BlogYourWay">
+  <meta property="og:title" content="Sign Up - Whoosh">
   <meta property="og:description"
         content="Host all your blogposts and projects at one place.">
   <meta property="og:image"
@@ -16,7 +16,7 @@
           content="https://{{ request.host }}{{ url_for(request.endpoint, **request.view_args) }}">
   {% endif %}
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="BlogYourWay">
+  <meta property="og:site_name" content="Whoosh">
   <meta name="twitter:card" content="summary_large_image">
 {% endblock %}
 {% block head %}
@@ -30,15 +30,18 @@
         {{ form.hidden_tag() }}
         <div class="card bg-white shadow" id="step1">
           <div class="card-body">
-            <div class="container mb-4">
+            <div class="container mb-5">
               <div class="row justify-content-center">
                 <div class="me-auto col-auto logo">
-                  <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" />
-                  <h3 class="fw-bold pt-2">BlogYourWay</h3>
+                  <img src="{{ url_for('static', filename='img/logo.png') }}"
+                       alt="Logo"
+                       width="36"
+                       height="36" />
+                  <h5 class="pt-2 ps-1 fw-bold">Whoosh</h5>
                 </div>
               </div>
             </div>
-            <h5 class="text-center my-4">Sign Up</h5>
+            <h3 class="text-center my-4">Sign Up</h3>
             <div class="input-group mb-4">
               <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
               {{ form.email(class="form-control") }}
@@ -63,15 +66,15 @@
         </div>
         <div class="card hide bg-white shadow d-none" id="step2">
           <div class="card-body">
-            <div class="container mb-4">
+            <div class="container mb-5">
               <div class="row justify-content-center">
                 <div class="me-auto col-auto logo">
                   <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" />
-                  <h3 class="fw-bold pt-2">BlogYourWay</h3>
+                  <h5 class="fw-bold pt-2 ps-1">Whoosh</h5>
                 </div>
               </div>
             </div>
-            <h5 class="text-center my-4">Almost Done...</h5>
+            <h3 class="text-center my-4">Almost Done...</h3>
             <div class="input-group mb-1">
               <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
               {{ form.username(class="form-control") }}

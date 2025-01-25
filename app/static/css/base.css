@@ -235,3 +235,7 @@ textarea::-ms-input-placeholder {
   font-size: small;
   font-style: italic;
 }
+
+.brand-text {
+  font-family: "Ubuntu Condensed", sans-serif;
+}

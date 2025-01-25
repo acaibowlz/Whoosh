@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
-{% block title %}BlogYourWay - Share As You Want{% endblock %}
+{% block title %}Whoosh - Share As You Want{% endblock %}
 {% block meta_tags %}
   <meta name="description"
         content="Host all your blogposts and projects at one place.">
-  <meta property="og:title" content="BlogYourWay - Share As You Want">
+  <meta property="og:title" content="Whoosh - Share As You Want">
   <meta property="og:description"
         content="Host all your blogposts and projects at one place.">
   <meta property="og:image"
@@ -16,7 +16,7 @@
           content="https://{{ request.host }}{{ url_for(request.endpoint, **request.view_args) }}">
   {% endif %}
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="BlogYourWay">
+  <meta property="og:site_name" content="Whoosh">
   <meta name="twitter:card" content="summary_large_image">
 {% endblock %}
 {% block head %}
@@ -26,7 +26,7 @@
 {% block body %}
   <div class="container pt-4">
     <div class="row align-items-center">
-      <div class="offset-1 col-auto">
+      <div class="col-auto p-0">
         <img src="{{ url_for('static', filename='img/logo.png') }}"
              alt="Logo"
              width="36"
@@ -35,7 +35,7 @@
       <div class="col-auto">
         <a href="{{ url_for("main.landing_page") }}"
            class="text-decoration-none text-black">
-          <h3 class="fw-bold pt-2">BlogYourWay</h3>
+          <h5 class="ps-1 pt-2 fw-bold">Whoosh</h5>
         </a>
       </div>
     </div>
@@ -45,7 +45,7 @@
       <div class="col-9 col-lg-7 col-xxl-5 py-5 mx-auto">
         <h1 class="display-4 fw-bold">Share thoughts and works at once</h1>
         <p class="py-4">
-          BlogYourWay is a perfect solution for hosting your content, including
+          Whoosh is a perfect solution for hosting your content, including
           blogging and project showcases. All come with markdown-support.
         </p>
         <a class="btn btn-get-started fw-bold"
@@ -83,9 +83,9 @@
               <h1 class="ps-3 py-3 icon-orange">
                 <i class="fa-solid fa-palette"></i>
               </h1>
-              <h5 class="card-title py-3">Share your works via BlogYourWay</h5>
+              <h5 class="card-title py-3">Share your works via Whoosh</h5>
               <p class="card-text text-grey pb-4">
-                Showcase your passion and projects beautifully with BlogYourWay—where creativity meets elegance.
+                Showcase your passion and projects beautifully with Whoosh—where creativity meets elegance.
               </p>
             </div>
           </div>
@@ -111,26 +111,10 @@
       <div class="d-md-block d-none">
         <hr class="my-4" />
       </div>
-      <div class="row">
-        <div class="col-md-6 text-md-start text-center ">
-          <p class="small">
-            &copy; <span id="yearTag"></span> BlogYourWay. All rights reserved.
-          </p>
-        </div>
-        <div class="col-md-0 d-md-none d-block">
-          <hr class="my-4" />
-        </div>
-        <div class="col-md-6 text-md-start text-center">
-          <h2 class="h5 mb-3">Join Our Open Source Community</h2>
-          <p class="mb-4 fw-light">
-            BlogYourWay is an open source side project and we welcome
-            contributions or advice from everyone. Whether you're looking to fix
-            bugs, add new features, or improve documentation, your help is
-            appreciated!
-          </p>
-          <a href="https://github.com/hengtseChou/blogyourway"
-             class="btn btn-outline-light">Contribute on GitHub</a>
-        </div>
+      <div class="text-center">
+        <p class="small">
+          &copy; 2024 - <span id="yearTag"></span> Whoosh. All rights reserved. <a href="https://github.com/hengtseChou/whoosh" class="text-white">Check out Whoosh on GitHub!</a>
+        </p>
       </div>
     </div>
   </footer>

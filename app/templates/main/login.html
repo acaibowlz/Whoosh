@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
-{% block title %}Login - BlogYourWay{% endblock %}
+{% block title %}Login - Whoosh{% endblock %}
 {% block meta_tags %}
   <meta name="description"
         content="Host all your blogposts and projects at one place.">
-  <meta property="og:title" content="Login - BlogYourWay">
+  <meta property="og:title" content="Login - Whoosh">
   <meta property="og:description"
         content="Host all your blogposts and projects at one place.">
   <meta property="og:image"
@@ -16,7 +16,7 @@
           content="https://{{ request.host }}{{ url_for(request.endpoint, **request.view_args) }}">
   {% endif %}
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="BlogYourWay">
+  <meta property="og:site_name" content="Whoosh">
   <meta name="twitter:card" content="summary_large_image">
 {% endblock %}
 {% block head %}
@@ -29,15 +29,18 @@
       <div class="col-10 col-md-12 mx-auto">
         <div class="card bg-white shadow">
           <div class="card-body">
-            <div class="container mb-4">
+            <div class="container mb-5">
               <div class="row justify-content-center">
                 <div class="me-auto col-auto logo">
-                  <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
-                  <h3 class="fw-bold pt-2">BlogYourWay</h3>
+                  <img src="{{ url_for('static', filename='img/logo.png') }}"
+                       alt="Logo"
+                       width="30"
+                       height="30" />
+                  <h5 class="pt-2 ps-1 fw-bold">Whoosh</h5>
                 </div>
               </div>
             </div>
-            <h5 class="text-center my-4">Login</h5>
+            <h3 class="text-center my-4">Login</h3>
             <form method="post">
               {{ form.hidden_tag() }}
               <div class="input-group mb-4">

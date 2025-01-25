@@ -1,11 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}{{ project.title }} - {{ user.blogname }}{% endblock %}
 {% block meta_tags %}
-  <meta name="description"
-        content="BlogYourWay, the all-in-1 blogging platform." />
+  <meta name="description" content="Whoosh, your all-in-1 blogging platform." />
   <meta property="og:title" content="{{ project.title }}">
   <meta property="og:description"
-        content="BlogYourWay, the all-in-1 blogging platform.">
+        content="Whoosh, your all-in-1 blogging platform.">
   <meta property="og:type" content="article" />
   {% if "localhost" in request.host %}
     <meta property="og:url"
