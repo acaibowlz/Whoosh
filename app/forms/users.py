@@ -54,7 +54,7 @@ class SignUpForm(FlaskForm):
         validators=[
             InputRequired(),
             Regexp(
-                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?!.*\s).{8,}$",
+                r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?!.*\s).{8,}$",
                 message="Password must be at least 8 characters long and include both upper and lower case letters and digits.",
             ),
         ],
@@ -161,7 +161,7 @@ class UpdatePasswordForm(FlaskForm):
     new_pw = PasswordField(
         validators=[
             Regexp(
-                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?!.*\s).{8,}$",
+                r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?!.*\s).{8,}$",
                 message="New password must be at least 8 characters long and include both upper and lower case letters and digits.",
             )
         ]
@@ -169,7 +169,7 @@ class UpdatePasswordForm(FlaskForm):
     new_pw_repeat = PasswordField(
         validators=[
             Regexp(
-                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?!.*\s).{8,}$",
+                r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?!.*\s).{8,}$",
                 message="New password must be at least 8 characters long and include both upper and lower case letters and digits.",
             )
         ]
