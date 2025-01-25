@@ -155,7 +155,7 @@ def sitemap() -> str:
     for username in user_utils.get_all_username():
         dynamic_urls.extend(
             [
-                {"loc": f"{base_url}@{username}"},
+                {"loc": f"{base_url}/@{username}"},
                 {"loc": f"{base_url}/@{username}/blog"},
                 {"loc": f"{base_url}/@{username}/about"},
             ]
