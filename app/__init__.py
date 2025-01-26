@@ -70,7 +70,7 @@ def create_app() -> Flask:
         """Logs out users who have been inactive for a specified timeout period. Resets the timeout if the user is still valid."""
         if not current_user.is_authenticated:
             return
-        if session["user_keep_alive"]:
+        if session.get("user_keep_alive"):
             return
         now = datetime.now(timezone.utc)
         last_active = session["user_last_active"]
@@ -80,6 +80,7 @@ def create_app() -> Flask:
             session.clear()
             logger.debug(f"User {username} logged out due to inactivity.")
         else:
+            session["user_keep_alive"] = False
             session["user_last_active"] = now
 
     # Error handlers
