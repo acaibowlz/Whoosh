@@ -318,13 +318,16 @@ class ProjectsUtils:
             filter={"project_uid": project_uid}, increments={"reads": 1}
         )
 
-    def view_increment(self, project_uid: str) -> None:
+    def view_increment(self, author: str, project_uid: str) -> None:
         """
         Increment the view count for a project.
+        Now the counts won't increase if the user is logged in and viewing their own blog.
 
         Args:
             project_uid (str): The UID of the project.
         """
+        if current_user.is_authenticated and current_user.username == author:
+            return
         self._db_handler.project_info.make_increments(
             filter={"project_uid": project_uid}, increments={"views": 1}
         )

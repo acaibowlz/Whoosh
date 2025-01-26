@@ -323,24 +323,33 @@ class PostUtils:
         post["content"] = post_content
         return post
 
-    def read_increment(self, post_uid: str) -> None:
+    def read_increment(self, author: str, post_uid: str) -> None:
         """
         Increment the read count for a specific post.
+        Now the counts won't increase if the user is logged in and viewing their own blog.
 
         Args:
+            author (str): The author's username.
             post_uid (str): The UID of the post to increment.
         """
+        if current_user.is_authenticated and current_user.username == author:
+            return
         self._db_handler.post_info.make_increments(
             filter={"post_uid": post_uid}, increments={"reads": 1}
         )
 
-    def view_increment(self, post_uid: str) -> None:
+    def view_increment(self, author: str, post_uid: str) -> None:
         """
         Increment the view count for a specific post.
+        Now the counts won't increase if the user is logged in and viewing their own blog.
 
         Args:
+            author (str): The author's username.
             post_uid (str): The UID of the post to increment.
         """
+        if current_user.is_authenticated and current_user.username == author:
+            return
+
         self._db_handler.post_info.make_increments(
             filter={"post_uid": post_uid}, increments={"views": 1}
         )

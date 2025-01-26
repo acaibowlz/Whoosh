@@ -2,6 +2,7 @@ import logging
 from dataclasses import asdict
 
 import bcrypt
+from flask_login import current_user
 
 from app.forms.users import SignUpForm
 from app.logging import Logger, logger, logger_utils
@@ -308,10 +309,13 @@ class UserUtils:
     def total_view_increment(self, username: str) -> None:
         """
         Increment the total view count for a user.
+        Now the counts won't increase if the user is logged in and viewing their own blog.
 
         Args:
             username (str): The username.
         """
+        if current_user.is_authenticated and current_user.username == username:
+            return
         self._db_handler.user_info.make_increments(
             filter={"username": username}, increments={"total_views": 1}
         )

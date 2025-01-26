@@ -85,7 +85,6 @@ def login() -> str:
         username = user_creds.get("username")
         user = user_utils.get_user_info(username)
         login_user(user)
-        session["user"] = user
         session["user_last_active"] = datetime.now(timezone.utc)
         session["user_keep_alive"] = form.persistent.data
         logger_utils.login_succeeded(request=request, username=username)
@@ -149,8 +148,6 @@ def robotstxt() -> str:
 
 
 @main.route("/sitemap")
-@main.route("/sitemap/")
-@main.route("/sitemap.xml")
 def sitemap() -> str:
     """Generate and serve a sitemap of the website/application.
 

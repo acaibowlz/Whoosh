@@ -23,9 +23,9 @@ from app.helpers.users import user_utils
 from app.helpers.utils import (
     Paging,
     convert_about,
+    convert_changelog_content,
     convert_post_content,
     convert_project_content,
-    convert_changelog_content,
     sort_dict,
 )
 from app.logging import logger, logger_utils
@@ -104,7 +104,7 @@ def blogpost_main_actions(username: str, post_uid: str, request: Request) -> str
     Returns:
         str: Rendered HTML of the blog post page.
     """
-    author = mongodb.user_info.find_one({"username": username})
+    user = mongodb.user_info.find_one({"username": username})
     post = post_utils.get_full_post(post_uid)
 
     post["content"] = convert_post_content(post.get("content"))
@@ -119,11 +119,11 @@ def blogpost_main_actions(username: str, post_uid: str, request: Request) -> str
     comments = comment_utils.find_comments_by_post_uid(post_uid)
 
     logger_utils.page_visited(request)
-    post_utils.view_increment(post_uid)
+    post_utils.view_increment(username, post_uid)
     user_utils.total_view_increment(username)
 
     return render_template(
-        "frontstage/blogpost.html", user=author, post=post, comments=comments, form=form
+        "frontstage/blogpost.html", user=user, post=post, comments=comments, form=form
     )
 
 
@@ -291,15 +291,15 @@ def project_main_actions(username: str, project_uid: str, request: Request) -> s
     Returns:
         str: Rendered HTML of the project page.
     """
-    author = mongodb.user_info.find_one({"username": username})
+    user = mongodb.user_info.find_one({"username": username})
     project = projects_utils.get_full_project(project_uid)
     project["content"] = convert_project_content(project.get("content"))
 
     logger_utils.page_visited(request)
     user_utils.total_view_increment(username)
-    projects_utils.view_increment(project_uid)
+    projects_utils.view_increment(username, project_uid)
 
-    return render_template("frontstage/project.html", user=author, project=project)
+    return render_template("frontstage/project.html", user=user, project=project)
 
 
 @frontstage.route("/@<username>/project/<project_uid>", methods=["GET"])
@@ -463,5 +463,6 @@ def readcount_increment() -> str:
         str: Confirmation message.
     """
     post_uid = request.args.get("post_uid", type=str)
-    post_utils.read_increment(post_uid)
+    author = mongodb.post_info.find_one({"post_uid": post_uid}).get("author")
+    post_utils.read_increment(author, post_uid)
     return "OK"
