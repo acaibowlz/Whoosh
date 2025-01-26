@@ -22,13 +22,11 @@ Whoosh is a hobby project that serves as a minimal and independent blogging serv
 
 ## 🌙 Future Works
 
-We’re working on these upcoming features:
+Some features might be implemented in the future:
 
-- Content Polishing with OPENAI API
-- Google OAuth for Easier Login
-- Serving Images from the Database
-- Post Traffic/Read Ratio Statistics
-- Automatic Logout or JWT Session Auth
-- Migration to Modern Front-End Framework/FastAPI
+- Content polishing with OPENAI API
+- Serving images from the database
+- Post traffic trending statistics
+- Migration to modern front-end framework
 
 Happy blogging! 🎉
