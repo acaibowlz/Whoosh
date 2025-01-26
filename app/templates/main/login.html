@@ -51,6 +51,9 @@
                 <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
                 {{ form.password(class_="form-control") }}
               </div>
+              <div class="form-check mb-4">
+                {{ form.persistent(class="form-check-input") }} {{ form.persistent.label(class="form-check-label") }}
+              </div>
               {{ form.submit_(class_="btn btn-orange w-100 rounded-pill") }}
             </form>
             <div class="text-center mt-4">

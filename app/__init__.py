@@ -1,12 +1,12 @@
 import time
+from datetime import datetime, timedelta, timezone
 from typing import Tuple
 
-from flask import Flask, render_template, request
-from flask_login import LoginManager
+from flask import Flask, render_template, request, session
+from flask_login import LoginManager, current_user, logout_user
 from pymongo.errors import ServerSelectionTimeoutError
 
-from app.cache import cache
-from app.config import APP_SECRET, CACHE_TIMEOUT, ENV, REDIS_URL, REDISHOST, REDISPORT
+from app.config import APP_SECRET, ENV, USER_LOGIN_TIMEOUT
 from app.helpers.users import user_utils
 from app.logging import logger, return_client_ip
 from app.models.users import UserInfo
@@ -43,16 +43,6 @@ def create_app() -> Flask:
         app.config["DEBUG_TB_INTERCEPT_REDIRECTS"] = False
         logger.debug("Debugtoolbar initialized.")
 
-    # Cache configuration
-    app.config["CACHE_TYPE"] = "RedisCache"
-    app.config["CACHE_REDIS_HOST"] = REDISHOST
-    app.config["CACHE_REDIS_PORT"] = REDISPORT
-    app.config["CACHE_REDIS_DB"] = 0
-    app.config["CACHE_REDIS_URL"] = REDIS_URL
-    app.config["CACHE_DEFAULT_TIMEOUT"] = CACHE_TIMEOUT
-    cache.init_app(app)
-    logger.debug(f"{app.config['CACHE_TYPE']} initialized.")
-
     # Login manager configuration
     login_manager = LoginManager()
     login_manager.login_view = "main.login"
@@ -70,13 +60,25 @@ def create_app() -> Flask:
         Returns:
             UserInfo: The user information object.
         """
-        user = cache.get(username)
-        if not user:
-            user = user_utils.get_user_info(username)
-            if user:
-                logger.debug("Updating user cache from user loader.")
-                cache.set(username, user, timeout=5 * 60)
+        user = user_utils.get_user_info(username)
         return user
+
+    @app.before_request
+    def logout_inactive() -> None:
+        """Logs out users who have been inactive for a specified timeout period. Resets the timeout if the user is still valid."""
+        if not current_user.is_authenticated:
+            return
+        if session["user_keep_alive"]:
+            return
+        now = datetime.now(timezone.utc)
+        last_active = session["user_last_active"]
+        if (now - last_active) > timedelta(seconds=USER_LOGIN_TIMEOUT):
+            username = current_user.username
+            logout_user()
+            session.clear()
+            logger.debug(f"User {username} logged out due to inactivity.")
+        else:
+            session["user_last_active"] = now
 
     # Error handlers
     @app.errorhandler(404)

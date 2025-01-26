@@ -2,20 +2,31 @@ import io
 import json
 
 from bcrypt import checkpw, gensalt, hashpw
-from flask import (Blueprint, Response, flash, redirect, render_template,
-                   request, send_file, session, url_for)
+from flask import (
+    Blueprint,
+    Response,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
 from flask_login import current_user, login_required, logout_user
 
-from app.cache import cache, update_user_cache
 from app.config import TEMPLATE_FOLDER
 from app.forms.changelog import EditChangelogForm, NewChangelogForm
 from app.forms.posts import EditPostForm, NewPostForm
 from app.forms.projects import EditProjectForm, NewProjectForm
-from app.forms.users import (EditAboutForm, GeneralSettingsForm,
-                             UpdatePasswordForm, UpdateSocialLinksForm,
-                             UserDeletionForm)
-from app.helpers.changelog import (changelog_utils, create_changelog,
-                                   update_changelog)
+from app.forms.users import (
+    EditAboutForm,
+    GeneralSettingsForm,
+    UpdatePasswordForm,
+    UpdateSocialLinksForm,
+    UserDeletionForm,
+)
+from app.helpers.changelog import changelog_utils, create_changelog, update_changelog
 from app.helpers.posts import create_post, post_utils, update_post
 from app.helpers.projects import create_project, projects_utils, update_project
 from app.helpers.users import user_utils
@@ -259,7 +270,6 @@ def settings_panel() -> str:
         )
         logger.debug(f"General settings for {current_user.username} have been updated.")
         flash("Update succeeded!", category="success")
-        update_user_cache(cache, current_user.username)
         user = mongodb.user_info.find_one({"username": current_user.username})
 
     if request.method == "GET":
@@ -284,7 +294,6 @@ def settings_panel() -> str:
         )
         logger.debug(f"Social links for {current_user.username} have been updated.")
         flash("Social Links updated!", category="success")
-        update_user_cache(cache, current_user.username)
         user = mongodb.user_info.find_one({"username": current_user.username})
 
     if form_update_pw.submit_pw.data and form_update_pw.validate_on_submit():
@@ -311,8 +320,11 @@ def settings_panel() -> str:
             update={"password": new_pw_hashed},
         )
         logger.debug(f"Password for user {current_user.username} has been updated.")
+        logout_user()
+        session.clear()
         flash("Password update succeeded!", category="success")
-        user = mongodb.user_info.find_one({"username": current_user.username})
+        flash("Please log in again with your new password.", category="info")
+        return redirect(url_for("main.login"))
 
     if form_deletion.submit_delete.data and form_deletion.validate_on_submit():
         pw = form_deletion.password.data
@@ -336,7 +348,7 @@ def settings_panel() -> str:
         logout_user()
         logger_utils.logout(request=request, username=username)
         user_utils.delete_user(username)
-        cache.delete(username)
+        session.clear()
         flash("Account deleted successfully!", category="success")
         logger.debug(f"User {username} has been deleted.")
         return redirect(url_for("main.signup"))
@@ -425,7 +437,6 @@ def about_panel() -> str:
         mongodb.user_about.update_values(
             filter={"username": user.get("username")}, update=updated_about
         )
-        update_user_cache(cache, current_user.username)
         about = updated_about.get("about")
         logger.debug(f"Information for user {current_user.username} has been updated.")
         flash("Information updated!", category="success")
@@ -508,13 +519,10 @@ def edit_changelog(changelog_uid: str) -> str:
 @backstage.route("/edit-featured", methods=["GET"])
 @login_required
 def toggle_featured() -> Response:
-    """Toggles the featured status of a post.
-
-    Args:
-        None
-
-    Returns:
-        Response: Redirects to the posts panel page.
+    """
+    Toggles the featured status of a post.
+    This action is triggered by the button over the post panel.
+    When the action is done, it returns to the same panel where the action was triggered.
     """
     post_uid = request.args.get("uid")
     post_info = mongodb.post_info.find_one({"post_uid": post_uid})
@@ -544,13 +552,10 @@ def toggle_featured() -> Response:
 @backstage.route("/edit-archived", methods=["GET"])
 @login_required
 def toggle_archived() -> Response:
-    """Toggles the archived status of posts or projects.
-
-    Args:
-        None
-
-    Returns:
-        REsponse: Redirects to the appropriate panel based on the current tab.
+    """
+    Toggles the archived status of posts or projects.
+    This action is triggered by the botton over the post or project panel.
+    When the action is done, it returns to the same panel where the action was triggered.
     """
     content_type = request.args.get("type")
 
@@ -580,7 +585,6 @@ def toggle_archived() -> Response:
         mongodb.user_info.make_increments(
             filter={"username": author}, increments=tags_increment, upsert=True
         )
-        update_user_cache(cache, current_user.username)
         logger.debug(f"Archive status for post {post_uid} is now set to {updated_archived_status}.")
 
     elif content_type == "project":
@@ -641,13 +645,8 @@ def toggle_archived() -> Response:
 @backstage.route("/delete/post", methods=["GET"])
 @login_required
 def delete_post() -> Response:
-    """Deletes a post.
-
-    Args:
-        None
-
-    Returns:
-        REsponse: Redirects to the archive panel page.
+    """
+    Deletes a post. Redirects to the archive panel page when it's done.
     """
     post_uid = request.args.get("uid")
     post_info = mongodb.post_info.find_one({"post_uid": post_uid})
@@ -663,13 +662,8 @@ def delete_post() -> Response:
 @backstage.route("/delete/project", methods=["GET"])
 @login_required
 def delete_project() -> Response:
-    """Deletes a project.
-
-    Args:
-        None
-
-    Returns:
-        Response: Redirects to the archive panel page.
+    """
+    Deletes a project. Redirects to the archive panel page when it's done.
     """
     project_uid = request.args.get("uid")
     project_info = mongodb.project_info.find_one({"project_uid": project_uid})
@@ -685,13 +679,8 @@ def delete_project() -> Response:
 @backstage.route("/delete/changelog", methods=["GET"])
 @login_required
 def delete_changelog() -> Response:
-    """Deletes a changelog.
-
-    Args:
-        None
-
-    Returns:
-        Response: Redirects to the archive panel page.
+    """
+    Deletes a changelog. Redirects to the archive panel page when it's done.
     """
     changelog_uid = request.args.get("uid")
     changelog = mongodb.changelog.find_one({"changelog_uid": changelog_uid})
@@ -706,16 +695,12 @@ def delete_changelog() -> Response:
 @backstage.route("/logout", methods=["GET"])
 @login_required
 def logout() -> Response:
-    """Logs out the user and redirects to the home page.
-
-    Args:
-        None
-
-    Returns:
-        Response: Redirects to the home page.
+    """
+    Logs out the user and redirects to the home page.
     """
     username = current_user.username
     logout_user()
+    session.clear()
     logger_utils.logout(request=request, username=username)
 
     return redirect(url_for("frontstage.home", username=username))

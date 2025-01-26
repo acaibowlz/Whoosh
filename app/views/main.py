@@ -1,10 +1,19 @@
-from datetime import timezone
+from datetime import datetime, timezone
 
 import bcrypt
-from flask import Blueprint, flash, make_response, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_login import current_user, login_user
 
-from app.config import DOMAIN, TEMPLATE_FOLDER
+from app.config import DOMAIN, ENV, TEMPLATE_FOLDER
 from app.forms.users import LoginForm, SignUpForm
 from app.helpers.posts import post_utils
 from app.helpers.projects import projects_utils
@@ -74,8 +83,11 @@ def login() -> str:
             return render_template("main/login.html", form=form)
 
         username = user_creds.get("username")
-        user_info = user_utils.get_user_info(username)
-        login_user(user_info)
+        user = user_utils.get_user_info(username)
+        login_user(user)
+        session["user"] = user
+        session["user_last_active"] = datetime.now(timezone.utc)
+        session["user_keep_alive"] = form.persistent.data
         logger_utils.login_succeeded(request=request, username=username)
         flash("Login Succeeded.", category="success")
         return redirect(url_for("backstage.root"))
@@ -145,7 +157,10 @@ def sitemap() -> str:
     Returns:
         str: XML content of the sitemap.
     """
-    base_url = f"https://{DOMAIN}"
+    if ENV == "dev":
+        base_url = f"{DOMAIN}"
+    else:
+        base_url = f"https://{DOMAIN}"
 
     # Static routes
     static_urls = [{"loc": f"{base_url}/{route}"} for route in ["", "login", "register"]]

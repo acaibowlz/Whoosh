@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 
 from flask_login import current_user
 
-from app.cache import cache, update_user_cache
 from app.forms.posts import EditPostForm, NewPostForm
 from app.helpers.utils import UIDGenerator, process_tags
 from app.models.posts import PostContent, PostInfo
@@ -79,7 +78,6 @@ class NewPostSetup:
         self._db_handler.user_info.make_increments(
             filter={"username": username}, increments=tags_increments, upsert=True
         )
-        update_user_cache(cache, username)
 
     def create_post(self, author_name: str, form: NewPostForm) -> str | None:
         """
@@ -155,7 +153,6 @@ class PostUpdateSetup:
         self._db_handler.user_info.make_increments(
             filter={"username": username}, increments=tags_increment, upsert=True
         )
-        update_user_cache(cache, username)
 
     def update_post(self, post_uid: str, form: EditPostForm) -> None:
         """

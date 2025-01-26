@@ -1,7 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import (
     BooleanField,
-    HiddenField,
     PasswordField,
     SelectField,
     StringField,
@@ -32,6 +31,7 @@ class LoginForm(FlaskForm):
 
     email = StringField(render_kw={"placeholder": "Email"}, validators=[InputRequired(), Email()])
     password = PasswordField(render_kw={"placeholder": "Password"}, validators=[InputRequired()])
+    persistent = BooleanField("Keep me logged in")
     submit_ = SubmitField(label="Login")
 
 
