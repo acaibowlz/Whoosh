@@ -6,7 +6,7 @@ from flask_login import current_user
 from app.forms.posts import EditPostForm, NewPostForm
 from app.helpers.utils import UIDGenerator, process_tags
 from app.models.posts import PostContent, PostInfo
-from app.mongo import Database, mongodb
+from app.mongo import Database
 
 ##################################################################################################
 
@@ -100,7 +100,7 @@ class NewPostSetup:
         return self._post_uid
 
 
-def create_post(form: NewPostForm) -> str:
+def create_post(form: NewPostForm, db_handler: Database) -> str:
     """
     Create a new post.
 
@@ -110,8 +110,8 @@ def create_post(form: NewPostForm) -> str:
     Returns:
         str: The UID of the newly created post.
     """
-    uid_generator = UIDGenerator(db_handler=mongodb)
-    new_post_setup = NewPostSetup(post_uid_generator=uid_generator, db_handler=mongodb)
+    uid_generator = UIDGenerator(db_handler=db_handler)
+    new_post_setup = NewPostSetup(post_uid_generator=uid_generator, db_handler=db_handler)
     new_post_uid = new_post_setup.create_post(author_name=current_user.username, form=form)
     return new_post_uid
 
@@ -181,7 +181,7 @@ class PostUpdateSetup:
         )
 
 
-def update_post(post_uid: str, form: EditPostForm) -> None:
+def update_post(post_uid: str, form: EditPostForm, db_handler: Database) -> None:
     """
     Update an existing post.
 
@@ -189,7 +189,7 @@ def update_post(post_uid: str, form: EditPostForm) -> None:
         post_uid (str): The UID of the post to update.
         form (EditPostForm): The form containing updated post data.
     """
-    post_update_setup = PostUpdateSetup(db_handler=mongodb)
+    post_update_setup = PostUpdateSetup(db_handler=db_handler)
     post_update_setup.update_post(post_uid=post_uid, form=form)
 
 
@@ -353,6 +353,3 @@ class PostUtils:
         self._db_handler.post_info.make_increments(
             filter={"post_uid": post_uid}, increments={"views": 1}
         )
-
-
-post_utils = PostUtils(db_handler=mongodb)

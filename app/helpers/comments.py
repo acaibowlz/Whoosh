@@ -8,7 +8,7 @@ from app.config import RECAPTCHA_SECRET
 from app.forms.comments import CommentForm
 from app.helpers.utils import UIDGenerator
 from app.models.comments import AnonymousComment, Comment
-from app.mongo import Database, mongodb
+from app.mongo import Database
 
 ##################################################################################################
 
@@ -92,7 +92,7 @@ class NewCommentSetup:
         self._db_handler.comment.insert_one(new_comment_data)
 
 
-def create_comment(post_uid: str, form: CommentForm) -> None:
+def create_comment(post_uid: str, form: CommentForm, db_handler: Database) -> None:
     """
     Initializes a NewCommentSetup instance and creates a new comment.
 
@@ -100,8 +100,8 @@ def create_comment(post_uid: str, form: CommentForm) -> None:
         post_uid (str): The UID of the post the comment is associated with.
         form (CommentForm): The form containing comment data.
     """
-    uid_generator = UIDGenerator(db_handler=mongodb)
-    comment_setup = NewCommentSetup(comment_uid_generator=uid_generator, db_handler=mongodb)
+    uid_generator = UIDGenerator(db_handler=db_handler)
+    comment_setup = NewCommentSetup(comment_uid_generator=uid_generator, db_handler=db_handler)
     comment_setup.create_comment(post_uid=post_uid, form=form)
 
 
@@ -147,6 +147,3 @@ class CommentUtils:
             self._db_handler.comment.find({"post_uid": post_uid}).sort("created_at", 1).as_list()
         )
         return result
-
-
-comment_utils = CommentUtils(db_handler=mongodb)

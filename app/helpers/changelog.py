@@ -6,7 +6,7 @@ from flask_login import current_user
 from app.forms.changelog import EditChangelogForm, NewChangelogForm
 from app.helpers.utils import UIDGenerator, process_tags
 from app.models.changelog import Changelog
-from app.mongo import Database, mongodb
+from app.mongo import Database
 
 
 class NewChangelogSetup:
@@ -63,7 +63,7 @@ class NewChangelogSetup:
         return self._changelog_uid
 
 
-def create_changelog(form: NewChangelogForm) -> str:
+def create_changelog(form: NewChangelogForm, db_handler: Database) -> str:
     """Creates a new changelog entry and inserts it into the database.
 
     Args:
@@ -72,8 +72,10 @@ def create_changelog(form: NewChangelogForm) -> str:
     Returns:
         str: The unique ID of the newly created changelog.
     """
-    uid_generator = UIDGenerator(db_handler=mongodb)
-    new_changelog_setup = NewChangelogSetup(uid_generator, mongodb)
+    uid_generator = UIDGenerator(db_handler=db_handler)
+    new_changelog_setup = NewChangelogSetup(
+        changelog_uid_generator=uid_generator, db_handler=db_handler
+    )
     new_changelog_uid = new_changelog_setup.create_changelog(
         form=form, author_name=current_user.username
     )
@@ -115,14 +117,14 @@ class ChangelogUpdateSetup:
         )
 
 
-def update_changelog(changelog_uid: str, form: EditChangelogForm) -> None:
+def update_changelog(changelog_uid: str, form: EditChangelogForm, db_handler: Database) -> None:
     """Updates an existing changelog entry using the provided form data.
 
     Args:
         changelog_uid (str): The unique ID of the changelog to update.
         form (EditChangelogForm): The form containing the updated data for the changelog.
     """
-    changelog_update_setup = ChangelogUpdateSetup(mongodb)
+    changelog_update_setup = ChangelogUpdateSetup(db_handler=db_handler)
     changelog_update_setup.update_changelog(changelog_uid=changelog_uid, form=form)
 
 
@@ -208,6 +210,3 @@ class ChangelogUtils:
                 .as_list()
             )
         return result
-
-
-changelog_utils = ChangelogUtils(mongodb)

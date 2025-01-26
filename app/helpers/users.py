@@ -7,7 +7,7 @@ from flask_login import current_user
 from app.forms.users import SignUpForm
 from app.logging import Logger, logger, logger_utils
 from app.models.users import UserAbout, UserCreds, UserInfo
-from app.mongo import Database, mongodb
+from app.mongo import Database
 
 ##################################################################################################
 
@@ -17,18 +17,16 @@ from app.mongo import Database, mongodb
 
 
 class NewUserSetup:
-    def __init__(self, form: SignUpForm, db_handler: Database, logger: Logger) -> None:
+    def __init__(self, form: SignUpForm, db_handler: Database) -> None:
         """
         Initialize the NewUserSetup class.
 
         Args:
             form (SignUpForm): The form containing user registration data.
             db_handler (Database): The database handler.
-            logger (Logger): The logger instance.
         """
         self._regist_form = form
         self._db_handler = db_handler
-        self._logger = logger
 
     def _create_user_creds(self, username: str, email: str, hashed_password: str) -> dict:
         """
@@ -109,8 +107,6 @@ class NewUserSetup:
         self._db_handler.user_info.insert_one(new_user_info)
         self._db_handler.user_about.insert_one(new_user_about)
 
-        logger_utils.registration_succeeded(self._regist_form.username.data)
-
         return self._regist_form.username.data
 
 
@@ -171,7 +167,6 @@ class UserDeletionSetup:
         self._db_handler.user_creds.delete_one({"username": self._user_to_be_deleted})
         self._db_handler.user_info.delete_one({"username": self._user_to_be_deleted})
         self._db_handler.user_about.delete_one({"username": self._user_to_be_deleted})
-
         self._logger.debug(f"Deleted user information for user {self._user_to_be_deleted}.")
 
     def start_deletion_process(self) -> None:
@@ -192,16 +187,14 @@ class UserDeletionSetup:
 
 
 class UserUtils:
-    def __init__(self, db_handler: Database, logger: logging.Logger) -> None:
+    def __init__(self, db_handler: Database) -> None:
         """
         Initialize the UserUtils class.
 
         Args:
             db_handler (Database): The database handler.
-            logger (logging.Logger): The logger instance.
         """
         self._db_handler = db_handler
-        self._logger = logger
 
     def get_all_username(self) -> list[str]:
         """
@@ -281,7 +274,7 @@ class UserUtils:
         user_creds.pop("_id", None)
         return UserCreds(**user_creds)
 
-    def delete_user(self, username: str) -> None:
+    def delete_user(self, username: str, logger: Logger) -> None:
         """
         Delete a user by username.
 
@@ -289,7 +282,7 @@ class UserUtils:
             username (str): The username of the user to be deleted.
         """
         user_deletion = UserDeletionSetup(
-            username=username, db_handler=self._db_handler, logger=self._logger
+            username=username, db_handler=self._db_handler, logger=logger
         )
         user_deletion.start_deletion_process()
 
@@ -303,7 +296,7 @@ class UserUtils:
         Returns:
             str: The username of the newly created user.
         """
-        user_registration = NewUserSetup(form, self._db_handler, self._logger)
+        user_registration = NewUserSetup(form, self._db_handler)
         return user_registration.create_user()
 
     def total_view_increment(self, username: str) -> None:
@@ -319,6 +312,3 @@ class UserUtils:
         self._db_handler.user_info.make_increments(
             filter={"username": username}, increments={"total_views": 1}
         )
-
-
-user_utils = UserUtils(db_handler=mongodb, logger=logger)

@@ -15,11 +15,11 @@ from flask_login import current_user, login_user
 
 from app.config import DOMAIN, ENV, TEMPLATE_FOLDER
 from app.forms.users import LoginForm, SignUpForm
-from app.helpers.posts import post_utils
-from app.helpers.projects import projects_utils
-from app.helpers.users import user_utils
+from app.helpers.posts import PostUtils
+from app.helpers.projects import ProjectsUtils
+from app.helpers.users import UserUtils
 from app.logging import logger, logger_utils
-from app.mongo import mongodb
+from app.mongo import mongo_connection
 
 main = Blueprint("main", __name__, template_folder=TEMPLATE_FOLDER)
 
@@ -65,25 +65,28 @@ def login() -> str:
     form = LoginForm()
 
     if form.validate_on_submit():
-        if not mongodb.user_creds.exists("email", form.email.data):
-            flash("Account not found. Please try again.", category="error")
-            logger_utils.login_failed(request=request, msg=f"email {form.email.data} not found")
-            return render_template("main/login.html", form=form)
+        with mongo_connection() as mongodb:
+            if not mongodb.user_creds.exists("email", form.email.data):
+                flash("Account not found. Please try again.", category="error")
+                logger_utils.login_failed(request=request, msg=f"email {form.email.data} not found")
+                return render_template("main/login.html", form=form)
 
-        user_creds = mongodb.user_creds.find_one({"email": form.email.data})
-        encoded_input_pw = form.password.data.encode("utf8")
-        encoded_valid_user_pw = user_creds.get("password").encode("utf8")
+            user_creds = mongodb.user_creds.find_one({"email": form.email.data})
+            encoded_input_pw = form.password.data.encode("utf8")
+            encoded_valid_user_pw = user_creds.get("password").encode("utf8")
 
-        if not bcrypt.checkpw(encoded_input_pw, encoded_valid_user_pw):
-            flash("Invalid password. Please try again.", category="error")
-            logger_utils.login_failed(
-                request=request,
-                msg=f"invalid password with email {form.email.data}",
-            )
-            return render_template("main/login.html", form=form)
+            if not bcrypt.checkpw(encoded_input_pw, encoded_valid_user_pw):
+                flash("Invalid password. Please try again.", category="error")
+                logger_utils.login_failed(
+                    request=request,
+                    msg=f"invalid password with email {form.email.data}",
+                )
+                return render_template("main/login.html", form=form)
 
-        username = user_creds.get("username")
-        user = user_utils.get_user_info(username)
+            username = user_creds.get("username")
+            user_utils = UserUtils(mongodb)
+            user = user_utils.get_user_info(username)
+
         login_user(user)
         session["user_last_active"] = datetime.now(timezone.utc)
         session["user_keep_alive"] = form.persistent.data
@@ -109,7 +112,10 @@ def signup() -> str:
     form = SignUpForm()
 
     if form.validate_on_submit():
-        user_utils.create_user(form)
+        with mongo_connection() as mongodb:
+            user_utils = UserUtils(mongodb)
+            username = user_utils.create_user(form)
+        logger_utils.registration_succeeded(username)
         flash("Sign up succeeded.", category="success")
         return redirect(url_for("main.login"))
 
@@ -163,44 +169,53 @@ def sitemap() -> str:
     static_urls = [{"loc": f"{base_url}/{route}"} for route in ["", "login", "register"]]
 
     # Dynamic routes
-    dynamic_urls = []
-    for username in user_utils.get_all_username():
-        dynamic_urls.extend(
-            [
-                {"loc": f"{base_url}/@{username}"},
-                {"loc": f"{base_url}/@{username}/blog"},
-                {"loc": f"{base_url}/@{username}/about"},
-            ]
-        )
-    for username in user_utils.get_all_username_gallery_enabled():
-        dynamic_urls.append({"loc": f"{base_url}/@{username}/gallery"})
-    for username in user_utils.get_all_username_changelog_enabled():
-        dynamic_urls.append({"loc": f"{base_url}/@{username}/changelog"})
+    with mongo_connection() as mongodb:
+        user_utils = UserUtils(mongodb)
+        post_utils = PostUtils(mongodb)
+        projects_utils = ProjectsUtils(mongodb)
 
-    for post in post_utils.get_all_posts_info():
-        slug = post.get("custom_slug")
-        lastmod = (
-            post.get("last_updated").replace(tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S%z")
-        )
-        lastmod = lastmod[:-2] + ":" + lastmod[-2:]
-        url = {
-            "loc": f"{base_url}/@{post.get('author')}/posts/{post.get('post_uid')}/{slug if slug else ''}",
-            "lastmod": lastmod,
-        }
-        dynamic_urls.append(url)
+        dynamic_urls = []
+        for username in user_utils.get_all_username():
+            dynamic_urls.extend(
+                [
+                    {"loc": f"{base_url}/@{username}"},
+                    {"loc": f"{base_url}/@{username}/blog"},
+                    {"loc": f"{base_url}/@{username}/about"},
+                ]
+            )
+        for username in user_utils.get_all_username_gallery_enabled():
+            dynamic_urls.append({"loc": f"{base_url}/@{username}/gallery"})
+        for username in user_utils.get_all_username_changelog_enabled():
+            dynamic_urls.append({"loc": f"{base_url}/@{username}/changelog"})
 
-    for project in projects_utils.get_all_projects_info():
-        slug = project.get("custom_slug")
-        logger.debug(project.get("last_updated"))
-        lastmod = (
-            project.get("last_updated").replace(tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S%z")
-        )
-        lastmod = lastmod[:-2] + ":" + lastmod[-2:]
-        url = {
-            "loc": f"{base_url}/@{project.get('author')}/projects/{project.get('project_uid')}/{slug if slug else ''}",
-            "lastmod": lastmod,
-        }
-        dynamic_urls.append(url)
+        for post in post_utils.get_all_posts_info():
+            slug = post.get("custom_slug")
+            lastmod = (
+                post.get("last_updated")
+                .replace(tzinfo=timezone.utc)
+                .strftime("%Y-%m-%dT%H:%M:%S%z")
+            )
+            lastmod = lastmod[:-2] + ":" + lastmod[-2:]
+            url = {
+                "loc": f"{base_url}/@{post.get('author')}/posts/{post.get('post_uid')}/{slug if slug else ''}",
+                "lastmod": lastmod,
+            }
+            dynamic_urls.append(url)
+
+        for project in projects_utils.get_all_projects_info():
+            slug = project.get("custom_slug")
+            logger.debug(project.get("last_updated"))
+            lastmod = (
+                project.get("last_updated")
+                .replace(tzinfo=timezone.utc)
+                .strftime("%Y-%m-%dT%H:%M:%S%z")
+            )
+            lastmod = lastmod[:-2] + ":" + lastmod[-2:]
+            url = {
+                "loc": f"{base_url}/@{project.get('author')}/projects/{project.get('project_uid')}/{slug if slug else ''}",
+                "lastmod": lastmod,
+            }
+            dynamic_urls.append(url)
 
     xml_sitemap = render_template(
         "main/sitemap.xml", static_urls=static_urls, dynamic_urls=dynamic_urls

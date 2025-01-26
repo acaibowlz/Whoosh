@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Any, Optional
 
 from pymongo import MongoClient
@@ -122,7 +123,9 @@ class ExtendedCollection:
 
 
 class ExtendedCursor(Cursor):
-    def __init__(self, collection: ExtendedCollection, filter: Optional[dict[str, Any]] = None) -> None:
+    def __init__(
+        self, collection: ExtendedCollection, filter: Optional[dict[str, Any]] = None
+    ) -> None:
         """Initialize the ExtendedCursor with a MongoDB collection and filter.
 
         Args:
@@ -176,7 +179,7 @@ class ExtendedCursor(Cursor):
         """
         self.__check_okay_to_chain()
         return list(self)
-    
+
     def __check_okay_to_chain(self) -> None:
         """Check if chaining operations is allowed."""
         return super(ExtendedCursor, self)._Cursor__check_okay_to_chain()
@@ -286,11 +289,18 @@ class Database:
             ExtendedCollection: The collection for project content.
         """
         return self._project_content
-    
+
     @property
     def changelog(self) -> ExtendedCollection:
         return self._changelog
 
 
-client = MongoClient(MONGO_URL, connect=False)
-mongodb = Database(client=client)
+@contextmanager
+def mongo_connection():
+    """Context manager for handling MongoDB connections."""
+    client = MongoClient(MONGO_URL, maxPoolSize=10, minPoolSize=1)
+    try:
+        mongodb = Database(client=client)
+        yield mongodb
+    finally:
+        client.close()

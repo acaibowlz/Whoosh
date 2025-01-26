@@ -15,11 +15,11 @@ from flask import (
 
 from app.config import TEMPLATE_FOLDER
 from app.forms.comments import CommentForm
-from app.helpers.changelog import changelog_utils
-from app.helpers.comments import comment_utils, create_comment
-from app.helpers.posts import post_utils
-from app.helpers.projects import projects_utils
-from app.helpers.users import user_utils
+from app.helpers.changelog import ChangelogUtils
+from app.helpers.comments import CommentUtils, create_comment
+from app.helpers.posts import PostUtils
+from app.helpers.projects import ProjectsUtils
+from app.helpers.users import UserUtils
 from app.helpers.utils import (
     Paging,
     convert_about,
@@ -29,7 +29,7 @@ from app.helpers.utils import (
     sort_dict,
 )
 from app.logging import logger, logger_utils
-from app.mongo import mongodb
+from app.mongo import mongo_connection
 from app.views.main import flashing_if_errors
 
 frontstage = Blueprint("frontstage", __name__, template_folder=TEMPLATE_FOLDER)
@@ -45,15 +45,18 @@ def home(username: str) -> str:
     Returns:
         str: Rendered HTML of the home page.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-
-    user = mongodb.user_info.find_one({"username": username})
-    featured_posts = post_utils.get_featured_posts_info(username)
-
     logger_utils.page_visited(request)
-    user_utils.total_view_increment(username)
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+
+        user = mongodb.user_info.find_one({"username": username})
+        post_utils = PostUtils(mongodb)
+        featured_posts = post_utils.get_featured_posts_info(username)
+
+        user_utils = UserUtils(mongodb)
+        user_utils.total_view_increment(username)
 
     return render_template("frontstage/home.html", user=user, posts=featured_posts)
 
@@ -68,25 +71,27 @@ def blog(username: str) -> str:
     Returns:
         str: Rendered HTML of the blog page.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-
-    current_page = request.args.get("page", default=1, type=int)
-    POSTS_EACH_PAGE = 5
-    paging = Paging(mongodb)
-    pagination = paging.setup(username, "post_info", current_page, POSTS_EACH_PAGE)
-
-    posts = post_utils.get_post_infos_with_pagination(
-        username=username, page_number=current_page, posts_per_page=POSTS_EACH_PAGE
-    )
-
-    user = user_utils.get_user_info(username)
-    tags = sort_dict(user.tags)
-    tags = {tag: count for tag, count in tags.items() if count > 0}
-
     logger_utils.page_visited(request)
-    user_utils.total_view_increment(username)
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+
+        current_page = request.args.get("page", default=1, type=int)
+        POSTS_EACH_PAGE = 5
+        paging = Paging(mongodb)
+        pagination = paging.setup(username, "post_info", current_page, POSTS_EACH_PAGE)
+
+        post_utils = PostUtils(mongodb)
+        posts = post_utils.get_post_infos_with_pagination(
+            username=username, page_number=current_page, posts_per_page=POSTS_EACH_PAGE
+        )
+
+        user_utils = UserUtils(mongodb)
+        user = user_utils.get_user_info(username)
+        tags = sort_dict(user.tags)
+        tags = {tag: count for tag, count in tags.items() if count > 0}
+        user_utils.total_view_increment(username)
 
     return render_template(
         "frontstage/blog.html", user=user, posts=posts, tags=tags, pagination=pagination
@@ -104,23 +109,27 @@ def blogpost_main_actions(username: str, post_uid: str, request: Request) -> str
     Returns:
         str: Rendered HTML of the blog post page.
     """
-    user = mongodb.user_info.find_one({"username": username})
-    post = post_utils.get_full_post(post_uid)
-
-    post["content"] = convert_post_content(post.get("content"))
-    post["readtime"] = str(readtime.of_html(post.get("content")))
-
-    form = CommentForm()
-    if form.validate_on_submit():
-        create_comment(post_uid, form)
-        flash("Comment published!", category="success")
-    flashing_if_errors(form.errors)
-
-    comments = comment_utils.find_comments_by_post_uid(post_uid)
-
     logger_utils.page_visited(request)
-    post_utils.view_increment(username, post_uid)
-    user_utils.total_view_increment(username)
+    with mongo_connection() as mongodb:
+        user = mongodb.user_info.find_one({"username": username})
+        post_utils = PostUtils(mongodb)
+        post = post_utils.get_full_post(post_uid)
+
+        post["content"] = convert_post_content(post.get("content"))
+        post["readtime"] = str(readtime.of_html(post.get("content")))
+
+        form = CommentForm()
+        if form.validate_on_submit():
+            create_comment(post_uid, form, mongodb)
+            flash("Comment published!", category="success")
+        flashing_if_errors(form.errors)
+
+        comment_utils = CommentUtils(mongodb)
+        comments = comment_utils.find_comments_by_post_uid(post_uid)
+
+        post_utils.view_increment(username, post_uid)
+        user_utils = UserUtils(mongodb)
+        user_utils.total_view_increment(username)
 
     return render_template(
         "frontstage/blogpost.html", user=user, post=post, comments=comments, form=form
@@ -138,14 +147,15 @@ def blogpost(username: str, post_uid: str) -> str:
     Returns:
         str: Rendered HTML of the blog post page or redirect to the slugged URL.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-    if not mongodb.post_info.exists("post_uid", post_uid):
-        logger.debug(f"Invalid post uid {post_uid}.")
-        abort(404)
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+        if not mongodb.post_info.exists("post_uid", post_uid):
+            logger.debug(f"Invalid post uid {post_uid}.")
+            abort(404)
+        post_info = mongodb.post_info.find_one({"post_uid": post_uid})
 
-    post_info = mongodb.post_info.find_one({"post_uid": post_uid})
     if username != post_info.get("author"):
         logger.debug(f"User {username} does not own post {post_uid}.")
         abort(404)
@@ -176,14 +186,15 @@ def blogpost_with_slug(username: str, post_uid: str, slug: str) -> str:
     Returns:
         str: Rendered HTML of the blog post page or redirect to the correct slug URL.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-    if not mongodb.post_info.exists("post_uid", post_uid):
-        logger.debug(f"Invalid post uid {post_uid}.")
-        abort(404)
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+        if not mongodb.post_info.exists("post_uid", post_uid):
+            logger.debug(f"Invalid post uid {post_uid}.")
+            abort(404)
+        post_info = mongodb.post_info.find_one({"post_uid": post_uid})
 
-    post_info = mongodb.post_info.find_one({"post_uid": post_uid})
     if username != post_info.get("author"):
         logger.debug(f"User {username} does not own post {post_uid}.")
         abort(404)
@@ -212,25 +223,29 @@ def tag(username: str) -> str:
     Returns:
         str: Rendered HTML of the tag page.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-
-    tag_url_encoded = request.args.get("tag", default=None, type=str)
-    if tag_url_encoded is None:
-        return redirect(url_for("frontstage.blog", username=username))
-
-    tag = unquote(tag_url_encoded)
-    user = user_utils.get_user_info(username)
-
-    posts = post_utils.get_post_infos(username)
-    posts_with_desired_tag = [post for post in posts if tag in post.get("tags")]
-
-    projects = projects_utils.get_project_infos(username)
-    projects_with_desired_tag = [project for project in projects if tag in project.get("tags")]
-
     logger_utils.page_visited(request)
-    user_utils.total_view_increment(username)
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+
+        tag_url_encoded = request.args.get("tag", default=None, type=str)
+        if tag_url_encoded is None:
+            return redirect(url_for("frontstage.blog", username=username))
+
+        tag = unquote(tag_url_encoded)
+        user_utils = UserUtils(mongodb)
+        user = user_utils.get_user_info(username)
+
+        post_utils = PostUtils(mongodb)
+        posts = post_utils.get_post_infos(username)
+        posts_with_desired_tag = [post for post in posts if tag in post.get("tags")]
+
+        projects_utils = ProjectsUtils(mongodb)
+        projects = projects_utils.get_project_infos(username)
+        projects_with_desired_tag = [project for project in projects if tag in project.get("tags")]
+
+        user_utils.total_view_increment(username)
 
     return render_template(
         "frontstage/tag.html",
@@ -251,29 +266,32 @@ def gallery(username: str) -> str:
     Returns:
         str: Rendered HTML of the gallery page.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-    user = user_utils.get_user_info(username)
-    if not user.gallery_enabled:
-        logger.debug(f"User {username} did not enable gallery feature.")
-        abort(404)
-
-    current_page = request.args.get("page", default=1, type=int)
-    PROJECTS_EACH_PAGE = 12
-    paging = Paging(mongodb)
-    pagination = paging.setup(username, "project_info", current_page, PROJECTS_EACH_PAGE)
-
-    projects = projects_utils.get_project_infos_with_pagination(
-        username=username,
-        page_number=current_page,
-        projects_per_page=PROJECTS_EACH_PAGE,
-    )
-    for project in projects:
-        project["created_at"] = project.get("created_at").strftime("%Y-%m-%d")
-
     logger_utils.page_visited(request)
-    user_utils.total_view_increment(username)
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+        user_utils = UserUtils(mongodb)
+        user = user_utils.get_user_info(username)
+        if not user.gallery_enabled:
+            logger.debug(f"User {username} did not enable gallery feature.")
+            abort(404)
+
+        current_page = request.args.get("page", default=1, type=int)
+        PROJECTS_EACH_PAGE = 12
+        paging = Paging(mongodb)
+        pagination = paging.setup(username, "project_info", current_page, PROJECTS_EACH_PAGE)
+
+        projects_utils = ProjectsUtils(mongodb)
+        projects = projects_utils.get_project_infos_with_pagination(
+            username=username,
+            page_number=current_page,
+            projects_per_page=PROJECTS_EACH_PAGE,
+        )
+        for project in projects:
+            project["created_at"] = project.get("created_at").strftime("%Y-%m-%d")
+
+        user_utils.total_view_increment(username)
 
     return render_template(
         "frontstage/gallery.html", user=user, projects=projects, pagination=pagination
@@ -291,13 +309,16 @@ def project_main_actions(username: str, project_uid: str, request: Request) -> s
     Returns:
         str: Rendered HTML of the project page.
     """
-    user = mongodb.user_info.find_one({"username": username})
-    project = projects_utils.get_full_project(project_uid)
-    project["content"] = convert_project_content(project.get("content"))
-
     logger_utils.page_visited(request)
-    user_utils.total_view_increment(username)
-    projects_utils.view_increment(username, project_uid)
+    with mongo_connection() as mongodb:
+        user = mongodb.user_info.find_one({"username": username})
+        projects_utils = ProjectsUtils(mongodb)
+        project = projects_utils.get_full_project(project_uid)
+        project["content"] = convert_project_content(project.get("content"))
+        projects_utils.view_increment(username, project_uid)
+
+        user_utils = UserUtils(mongodb)
+        user_utils.total_view_increment(username)
 
     return render_template("frontstage/project.html", user=user, project=project)
 
@@ -313,14 +334,15 @@ def project(username: str, project_uid: str) -> str:
     Returns:
         str: Rendered HTML of the project page or redirect to the slugged URL.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-    if not mongodb.project_info.exists("project_uid", project_uid):
-        logger.debug(f"Invalid project uid {project_uid}.")
-        abort(404)
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+        if not mongodb.project_info.exists("project_uid", project_uid):
+            logger.debug(f"Invalid project uid {project_uid}.")
+            abort(404)
+        project_info = mongodb.project_info.find_one({"project_uid": project_uid})
 
-    project_info = mongodb.project_info.find_one({"project_uid": project_uid})
     if username != project_info.get("author"):
         logger.debug(f"User {username} does not own project {project_uid}.")
         abort(404)
@@ -351,14 +373,15 @@ def project_with_slug(username: str, project_uid: str, slug: str) -> str:
     Returns:
         str: Rendered HTML of the project page or redirect to the correct slug URL.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-    if not mongodb.project_info.exists("project_uid", project_uid):
-        logger.debug(f"Invalid project uid {project_uid}.")
-        abort(404)
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+        if not mongodb.project_info.exists("project_uid", project_uid):
+            logger.debug(f"Invalid project uid {project_uid}.")
+            abort(404)
+        project_info = mongodb.project_info.find_one({"project_uid": project_uid})
 
-    project_info = mongodb.project_info.find_one({"project_uid": project_uid})
     if username != project_info.get("author"):
         logger.debug(f"User {username} does not own project {project_uid}.")
         abort(404)
@@ -387,15 +410,19 @@ def changelog(username: str) -> str:
     Returns:
         str: Rendered HTML of the changelog page.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-    user = user_utils.get_user_info(username)
-    if not user.changelog_enabled:
-        logger.debug(f"User {username} did not enable changelog feature.")
-        abort(404)
+    logger_utils.page_visited(request)
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+        user_utils = UserUtils(mongodb)
+        user = user_utils.get_user_info(username)
+        if not user.changelog_enabled:
+            logger.debug(f"User {username} did not enable changelog feature.")
+            abort(404)
+        changelog_utils = ChangelogUtils(mongodb)
+        changelogs = changelog_utils.get_changelogs(username, by_date=True)
 
-    changelogs = changelog_utils.get_changelogs(username, by_date=True)
     for changelog in changelogs:
         changelog["content"] = convert_changelog_content(changelog.get("content"))
 
@@ -412,16 +439,19 @@ def about(username: str) -> str:
     Returns:
         str: Rendered HTML of the about page.
     """
-    if not mongodb.user_info.exists("username", username):
-        logger.debug(f"Invalid username {username}.")
-        abort(404)
-
-    user = mongodb.user_info.find_one({"username": username})
-    about = mongodb.user_about.find_one({"username": username}).get("about")
-    about = convert_about(about)
-
     logger_utils.page_visited(request)
-    user_utils.total_view_increment(username)
+
+    with mongo_connection() as mongodb:
+        if not mongodb.user_info.exists("username", username):
+            logger.debug(f"Invalid username {username}.")
+            abort(404)
+
+        user = mongodb.user_info.find_one({"username": username})
+        about = mongodb.user_about.find_one({"username": username}).get("about")
+        about = convert_about(about)
+
+        user_utils = UserUtils(mongodb)
+        user_utils.total_view_increment(username)
 
     return render_template("frontstage/about.html", user=user, about=about)
 
@@ -434,9 +464,11 @@ def get_profile_img(username: str) -> str:
         username (str): The username of the user.
 
     Returns:
-        str: JSON response containing the profile image URL. Retrieve with key 'imageUrl'.
+        str: JSON response containing the profile image URL.
     """
-    user = user_utils.get_user_info(username)
+    with mongo_connection() as mongodb:
+        user_utils = UserUtils(mongodb)
+        user = user_utils.get_user_info(username)
     return jsonify({"imageUrl": user.profile_img_url})
 
 
@@ -449,10 +481,11 @@ def is_unique() -> str:
     """
     email = request.args.get("email", default=None, type=str)
     username = request.args.get("username", default=None, type=str)
-    if email is not None:
-        return jsonify(not mongodb.user_info.exists(key="email", value=email))
-    elif username is not None:
-        return jsonify(not mongodb.user_info.exists(key="username", value=username))
+    with mongo_connection() as mongodb:
+        if email is not None:
+            return jsonify(not mongodb.user_info.exists(key="email", value=email))
+        elif username is not None:
+            return jsonify(not mongodb.user_info.exists(key="username", value=username))
 
 
 @frontstage.route("/readcount-increment", methods=["GET"])
@@ -463,6 +496,8 @@ def readcount_increment() -> str:
         str: Confirmation message.
     """
     post_uid = request.args.get("post_uid", type=str)
-    author = mongodb.post_info.find_one({"post_uid": post_uid}).get("author")
-    post_utils.read_increment(author, post_uid)
+    with mongo_connection() as mongodb:
+        author = mongodb.post_info.find_one({"post_uid": post_uid}).get("author")
+        post_utils = PostUtils(mongodb)
+        post_utils.read_increment(author, post_uid)
     return "OK"

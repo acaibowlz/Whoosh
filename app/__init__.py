@@ -7,10 +7,10 @@ from flask_login import LoginManager, current_user, logout_user
 from pymongo.errors import ServerSelectionTimeoutError
 
 from app.config import APP_SECRET, ENV, USER_LOGIN_TIMEOUT
-from app.helpers.users import user_utils
+from app.helpers.users import UserUtils
 from app.logging import logger, return_client_ip
 from app.models.users import UserInfo
-from app.mongo import mongodb
+from app.mongo import mongo_connection
 from app.views import backstage_bp, frontstage_bp, main_bp
 
 
@@ -60,7 +60,9 @@ def create_app() -> Flask:
         Returns:
             UserInfo: The user information object.
         """
-        user = user_utils.get_user_info(username)
+        with mongo_connection() as mongodb:
+            user_utils = UserUtils(mongodb)
+            user = user_utils.get_user_info(username)
         return user
 
     @app.before_request
@@ -120,9 +122,10 @@ def create_app() -> Flask:
     # Check MongoDB connection
     while True:
         try:
-            mongodb.client.server_info()
-            logger.debug("MongoDB connected.")
-            break
+            with mongo_connection() as mongodb:
+                mongodb.client.server_info()
+                logger.debug("MongoDB connected.")
+                break
         except ServerSelectionTimeoutError:
             logger.error("MongoDB is NOT connected. Retry in 60 secs.")
             time.sleep(60)

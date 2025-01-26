@@ -6,7 +6,7 @@ from flask_login import current_user
 from app.forms.projects import EditProjectForm, NewProjectForm
 from app.helpers.utils import UIDGenerator, process_tags
 from app.models.projects import ProjectContent, ProjectInfo
-from app.mongo import Database, mongodb
+from app.mongo import Database
 
 
 def process_form_images(form: NewProjectForm | EditProjectForm) -> list[tuple[str, str]]:
@@ -108,7 +108,7 @@ class NewProjectSetup:
         return self._project_uid
 
 
-def create_project(form: NewProjectForm) -> str:
+def create_project(form: NewProjectForm, db_handler: Database) -> str:
     """
     Create a new project.
 
@@ -118,8 +118,8 @@ def create_project(form: NewProjectForm) -> str:
     Returns:
         str: The UID of the newly created project.
     """
-    uid_generator = UIDGenerator(db_handler=mongodb)
-    new_project_setup = NewProjectSetup(project_uid_generator=uid_generator, db_handler=mongodb)
+    uid_generator = UIDGenerator(db_handler=db_handler)
+    new_project_setup = NewProjectSetup(project_uid_generator=uid_generator, db_handler=db_handler)
     new_project_uid = new_project_setup.create_project(author_name=current_user.username, form=form)
     return new_project_uid
 
@@ -167,7 +167,7 @@ class ProjectUpdateSetup:
         )
 
 
-def update_project(project_uid: str, form: EditProjectForm) -> None:
+def update_project(project_uid: str, form: EditProjectForm, db_handler: Database) -> None:
     """
     Update an existing project.
 
@@ -175,7 +175,7 @@ def update_project(project_uid: str, form: EditProjectForm) -> None:
         project_uid (str): The UID of the project to update.
         form (EditProjectForm): The form containing updated project data.
     """
-    project_update_setup = ProjectUpdateSetup(db_handler=mongodb)
+    project_update_setup = ProjectUpdateSetup(db_handler=db_handler)
     project_update_setup.update_project(project_uid=project_uid, form=form)
 
 
@@ -331,6 +331,3 @@ class ProjectsUtils:
         self._db_handler.project_info.make_increments(
             filter={"project_uid": project_uid}, increments={"views": 1}
         )
-
-
-projects_utils = ProjectsUtils(mongodb)
