@@ -6,8 +6,6 @@ from typing import Optional, Tuple
 from flask import url_for
 from flask_login import UserMixin
 
-from app.config import DOMAIN, ENV
-
 
 def select_profile_img() -> str:
     """Selects a random profile image URL.
@@ -16,9 +14,7 @@ def select_profile_img() -> str:
         str: URL to the selected profile image.
     """
     idx = random.choice(range(5))
-    if ENV == "dev":
-        return f"{DOMAIN}/static/img/profile{idx}.png"
-    return f"https://{DOMAIN}/static/img/profile{idx}.png"
+    return url_for("static", filename=f"img/profile{idx}.png")
 
 
 @dataclass
