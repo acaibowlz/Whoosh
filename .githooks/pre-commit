@@ -5,7 +5,7 @@ reformat=false
 
 # Function to handle Python files
 handle_python_files() {
-    echo "[pre-commit]: formatting $1..."
+    echo "[pre-commit] formatting $1..."
     isort "$1" -q
     black "$1" -l 100 -q
     git add "$1"
@@ -13,26 +13,26 @@ handle_python_files() {
 
 # Function to handle HTML files
 handle_html_files() {
-    echo "[pre-commit]: formatting $1..."
+    echo "[pre-commit] formatting $1..."
     djlint "$1" --reformat --indent 2 --quiet
     git add "$1"
 }
 
 # Function to handle CSS files
 handle_css_files() {
-    echo "[pre-commit]: formatting $1..."
+    echo "[pre-commit] formatting $1..."
     prettier "$1" -w --log-level silent
     git add "$1"
 }
 
 handle_js_files() {
-    echo "[pre-commit]: formatting $1..."
+    echo "[pre-commit] formatting $1..."
     prettier "$1" -w --log-level silent
     git add "$1"
 }
 
 handle_md_files() {
-    echo "[pre-commit]: formatting $1..."
+    echo "[pre-commit] formatting $1..."
     prettier "$1" -w --log-level silent
     git add "$1"
 }
@@ -67,6 +67,6 @@ while read -r line; do
 done < <(git diff --cached --name-status | grep -E '\.(py|html|css|js)$')
 
 if [ "$reformat" == "true" ]; then
-    echo "[pre-commit]: done"
+    echo "[pre-commit] done"
     echo ""
 fi
