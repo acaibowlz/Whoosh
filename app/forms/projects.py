@@ -9,17 +9,17 @@ slug_pattern = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 class NewProjectForm(FlaskForm):
     """
-    Form for creating a new project.
+    Form for creating a new project. Inherits from FlaskWTForm.
 
     Fields:
-        title (StringField): Project title.
-        desc (StringField): Project description.
-        tags (StringField): Tags associated with the project.
-        url0, url1, url2, url3, url4 (StringField): Image URLs for the project's carousel.
-        caption0, caption1, caption2, caption3, caption4 (StringField): Captions for the image URLs.
-        custom_slug (StringField): Custom URL-friendly slug for the project.
-        editor (TextAreaField): Additional notes or content.
-        submit_ (SubmitField): Submit button.
+        - title: StringField, required.
+        - desc: StringField, required.
+        - tags: StringField, required. Tags are separated by commas.
+        - url0, url1, url2, url3, url4: StringField, required.
+        - caption0, caption1, caption2, caption3, caption4: StringField, optional.
+        - custom_slug: StringField, optional.
+        - editor: TextAreaField, required. Connected to EasyMDE.
+        - submit_: SubmitField, with a validation function defined in `/static/js/backstage/projects.js`.
     """
 
     title = StringField(validators=[InputRequired(message="Title is required.")])
@@ -62,17 +62,17 @@ class NewProjectForm(FlaskForm):
 
 class EditProjectForm(FlaskForm):
     """
-    Form for editing an existing project.
+    Form for editing an existing project. Inherits from FlaskWTForm.
 
     Fields:
-        title (StringField): Project title.
-        desc (StringField): Project description.
-        tags (StringField): Tags associated with the project.
-        url0, url1, url2, url3, url4 (StringField): Image URLs for the project's carousel.
-        caption0, caption1, caption2, caption3, caption4 (StringField): Captions for the URLs.
-        custom_slug (StringField): Custom URL-friendly slug for the project.
-        editor (TextAreaField): Additional notes or content.
-        submit_ (SubmitField): Submit button.
+        - title: StringField, required.
+        - desc: StringField, required.
+        - tags: StringField, required. Tags are separated by commas.
+        - url0, url1, url2, url3, url4: StringField, required.
+        - caption0, caption1, caption2, caption3, caption4: StringField, optional.
+        - custom_slug: StringField, optional.
+        - editor: TextAreaField, required. Connected to EasyMDE.
+        - submit_: SubmitField, with a validation function defined in `/static/js/backstage/edit-project.js`.
     """
 
     title = StringField(validators=[InputRequired(message="Title is required.")])

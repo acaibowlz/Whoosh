@@ -8,36 +8,21 @@ from app.helpers.utils import UIDGenerator, process_tags
 from app.models.posts import PostContent, PostInfo
 from app.mongo import Database
 
-##################################################################################################
-
-# Creating a new post
-
-##################################################################################################
-
 
 class NewPostSetup:
-    def __init__(self, post_uid_generator: UIDGenerator, db_handler: Database) -> None:
-        """
-        Initialize the NewPostSetup class.
+    """
+    Handles the setup and creation of new posts.
 
-        Args:
-            post_uid_generator (UIDGenerator): The UID generator for posts.
-            db_handler (Database): The database handler.
-        """
+    Use `create_post()` method to insert a new post the database, which creates entries in `post_info` and `post_content` collections.
+
+    User's tag counts are also incremented when a new post is created.
+    """
+
+    def __init__(self, post_uid_generator: UIDGenerator, db_handler: Database) -> None:
         self._post_uid = post_uid_generator.generate_post_uid()
         self._db_handler = db_handler
 
     def _create_post_info(self, form: NewPostForm, author_name: str) -> dict:
-        """
-        Create a dictionary of post information.
-
-        Args:
-            form (NewPostForm): The form containing post data.
-            author_name (str): The author's username.
-
-        Returns:
-            dict: A dictionary containing the post's information.
-        """
         new_post_info = PostInfo(
             post_uid=self._post_uid,
             title=form.title.data,
@@ -50,28 +35,12 @@ class NewPostSetup:
         return asdict(new_post_info)
 
     def _create_post_content(self, form: NewPostForm, author_name: str) -> dict:
-        """
-        Create a dictionary of post content.
-
-        Args:
-            form (NewPostForm): The form containing post data.
-            author_name (str): The author's username.
-
-        Returns:
-            dict: A dictionary containing the post's content.
-        """
         new_post_content = PostContent(
             post_uid=self._post_uid, author=author_name, content=form.editor.data
         )
         return asdict(new_post_content)
 
     def _increment_tags_for_user(self, new_post_info: dict) -> None:
-        """
-        Increment the tag counts for the user.
-
-        Args:
-            new_post_info (dict): A dictionary containing the post's information.
-        """
         username = new_post_info.get("author")
         tags = new_post_info.get("tags")
         tags_increments = {f"tags.{tag}": 1 for tag in tags}
@@ -79,16 +48,16 @@ class NewPostSetup:
             filter={"username": username}, increments=tags_increments, upsert=True
         )
 
-    def create_post(self, author_name: str, form: NewPostForm) -> str | None:
+    def create_post(self, author_name: str, form: NewPostForm) -> str:
         """
-        Create a new post in the database.
+        Receives the form data and the author name,
+        organizes them into `post_info` and `post_content` dataclasses, converts them to dictionaries,
+        finally inserts them into the database.
 
-        Args:
-            author_name (str): The author's username.
-            form (NewPostForm): The form containing post data.
+        User's tag counts are also incremented when a new post is created.
 
         Returns:
-            str | None: The UID of the newly created post, or None if creation failed.
+            str: The UID of the newly created post.
         """
         new_post_info = self._create_post_info(form=form, author_name=author_name)
         new_post_content = self._create_post_content(form=form, author_name=author_name)
@@ -102,10 +71,11 @@ class NewPostSetup:
 
 def create_post(form: NewPostForm, db_handler: Database) -> str:
     """
-    Create a new post.
+    Wraps `NewPostSetup` setup class to create a new post in the database.
 
-    Args:
-        form (NewPostForm): The form containing post data.
+    Note that one post is stored as two separate documents: `post_info` and `post_content`.
+
+    User's tag counts are also incremented when a new post is created.
 
     Returns:
         str: The UID of the newly created post.
@@ -116,31 +86,19 @@ def create_post(form: NewPostForm, db_handler: Database) -> str:
     return new_post_uid
 
 
-##################################################################################################
-
-# Updating a post
-
-##################################################################################################
-
-
 class PostUpdateSetup:
-    def __init__(self, db_handler: Database) -> None:
-        """
-        Initialize the PostUpdateSetup class.
+    """
+    Handles the update of existing posts in the database.
 
-        Args:
-            db_handler (Database): The database handler.
-        """
+    Use `update_post()` method to update an existing post with new data.
+
+    User's tag counts are also updated when a post is updated.
+    """
+
+    def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
 
     def _update_tags_for_user(self, post_uid: str, new_tags: dict) -> None:
-        """
-        Update the tag counts for the user when a post is updated.
-
-        Args:
-            post_uid (str): The UID of the post being updated.
-            new_tags (dict): The new tags associated with the post.
-        """
         post_info = self._db_handler.post_info.find_one({"post_uid": post_uid})
         username = post_info.get("author")
         old_tags = post_info.get("tags")
@@ -156,11 +114,11 @@ class PostUpdateSetup:
 
     def update_post(self, post_uid: str, form: EditPostForm) -> None:
         """
-        Update an existing post in the database.
+        Update an existing post in the database. No return value.
 
-        Args:
-            post_uid (str): The UID of the post to update.
-            form (EditPostForm): The form containing updated post data.
+        User's tag counts are also updated when a post is updated.
+
+        No return value.
         """
         updated_post_info = {
             "title": form.title.data,
@@ -183,42 +141,34 @@ class PostUpdateSetup:
 
 def update_post(post_uid: str, form: EditPostForm, db_handler: Database) -> None:
     """
-    Update an existing post.
+    Wraps `PostUpdateSetup` setup class to update an existing post in the database.
 
-    Args:
-        post_uid (str): The UID of the post to update.
-        form (EditPostForm): The form containing updated post data.
+    User's tag counts are also updated when a post is updated.
+
+    No return value.
     """
     post_update_setup = PostUpdateSetup(db_handler=db_handler)
     post_update_setup.update_post(post_uid=post_uid, form=form)
 
 
-##################################################################################################
-
-# Post utilities
-
-##################################################################################################
-
-
 class PostUtils:
-    def __init__(self, db_handler: Database) -> None:
-        """
-        Initialize the PostUtils class.
+    """
+    Provides utility methods for handling posts.
+    """
 
-        Args:
-            db_handler (Database): The database handler.
-        """
+    def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
 
     def get_all_posts_info(self, include_archive=False) -> list[dict]:
         """
-        Get information about all posts.
+        Retrieves all `post_info` documents from all users.
 
-        Args:
-            include_archive (bool, optional): Whether to include archived posts. Defaults to False.
+        This is mostly used to generate the sitemap.
+
+        Archived posts are excluded by default, but can be included if needed.
 
         Returns:
-            list[dict]: A list of dictionaries containing post information.
+            list[dict]: A list of dictionaries representing `post_info`.
         """
         if include_archive:
             result = self._db_handler.post_info.find({}).as_list()
@@ -228,13 +178,12 @@ class PostUtils:
 
     def get_featured_posts_info(self, username: str) -> list[dict]:
         """
-        Get information about featured posts for a specific user.
+        Retrieves all featured posts' `post_info` documents for the given user.
 
-        Args:
-            username (str): The username of the post author.
+        Note that archived posts are excluded.
 
         Returns:
-            list[dict]: A list of dictionaries containing featured post information.
+            list[dict]: A list of dictionaries representing `post_info`.
         """
         result = (
             self._db_handler.post_info.find(
@@ -248,14 +197,14 @@ class PostUtils:
 
     def get_post_infos(self, username: str, archive="exclude") -> list[dict]:
         """
-        Get information about posts for a specific user.
+        Retrieves all posts' `post_info` documents for the given user.
 
-        Args:
-            username (str): The username of the post author.
-            archive (str, optional): Whether to include archived posts. Defaults to "exclude". Possible values: "exclude", "include", "only".
+        By default, archived posts are excluded, but can be included or returned exclusively if needed.
+
+        Possible values for `archive`: "exclude", "include", "only".
 
         Returns:
-            list[dict]: A list of dictionaries containing post information.
+            list[dict]: A list of dictionaries representing `post_info`.
         """
         if archive == "exclude":
             result = (
@@ -281,15 +230,13 @@ class PostUtils:
         self, username: str, page_number: int, posts_per_page: int
     ) -> list[dict]:
         """
-        Get paginated information about posts for a specific user.
+        Retrieves all posts' `post_info` documents for the given user with pagination.
+        The page number and the number of posts per page are therefore required.
 
-        Args:
-            username (str): The username of the post author.
-            page_number (int): The page number.
-            posts_per_page (int): The number of posts per page.
+        Note that archived posts are excluded.
 
         Returns:
-            list[dict]: A list of dictionaries containing post information.
+            list[dict]: A list of dictionaries representing `post_info`.
         """
         if page_number == 1:
             result = (
@@ -310,13 +257,11 @@ class PostUtils:
 
     def get_full_post(self, post_uid: str) -> dict:
         """
-        Get the full information of a post, including its content.
-
-        Args:
-            post_uid (str): The UID of the post to retrieve.
+        Retrieves the full post data for a specific post UID.
+        `post_info` and `post_content` are merged into one dictionary by `post_uid`.
 
         Returns:
-            dict: A dictionary containing the full post information.
+            dict: A dictionary representing the full post data.
         """
         post = self._db_handler.post_info.find_one({"post_uid": post_uid})
         post_content = self._db_handler.post_content.find_one({"post_uid": post_uid}).get("content")
@@ -325,12 +270,10 @@ class PostUtils:
 
     def read_increment(self, author: str, post_uid: str) -> None:
         """
-        Increment the read count for a specific post.
-        Now the counts won't increase if the user is logged in and viewing their own blog.
+        Increases the read count for a specific post.
+        Note that the counts won't increase if the user is logged in and viewing their own blog.
 
-        Args:
-            author (str): The author's username.
-            post_uid (str): The UID of the post to increment.
+        No return value.
         """
         if current_user.is_authenticated and current_user.username == author:
             return
@@ -340,12 +283,10 @@ class PostUtils:
 
     def view_increment(self, author: str, post_uid: str) -> None:
         """
-        Increment the view count for a specific post.
-        Now the counts won't increase if the user is logged in and viewing their own blog.
+        Increases the view count for a specific post.
+        Note that the counts won't increase if the user is logged in and viewing their own blog.
 
-        Args:
-            author (str): The author's username.
-            post_uid (str): The UID of the post to increment.
+        No return value.
         """
         if current_user.is_authenticated and current_user.username == author:
             return

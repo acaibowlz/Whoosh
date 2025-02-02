@@ -7,13 +7,13 @@ from app.config import RECAPTCHA_KEY
 
 class CommentForm(FlaskForm):
     """
-    Form for submitting a comment.
+    Form for submitting a comment. Inherits from FlaskWTForm.
 
     Fields:
-        name (StringField): Name of the commenter, input by the anonymous commenter or retrieved from a logged in user.
-        email (StringField): Email of the commenter, input by the anonymous commenter or retrieved from a logged in user (optional).
-        comment (TextAreaField): Content of the comment.
-        submit_ (SubmitField): Submit button with ReCAPTCHA integration.
+        - name: StringField, required.
+        - email: StringField, optional.
+        - comment: TextAreaField, required.
+        - submit_: SubmitField, with reCAPTCHA validation.
     """
 
     name = StringField(

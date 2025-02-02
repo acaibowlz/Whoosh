@@ -1,169 +1,93 @@
-import logging
 from dataclasses import asdict
 
 import bcrypt
 from flask_login import current_user
 
 from app.forms.users import SignUpForm
-from app.logging import Logger, logger, logger_utils
+from app.logging import Logger
 from app.models.users import UserAbout, UserCreds, UserInfo
 from app.mongo import Database
 
-##################################################################################################
-
-# user registration
-
-##################################################################################################
-
 
 class NewUserSetup:
-    def __init__(self, form: SignUpForm, db_handler: Database) -> None:
-        """
-        Initialize the NewUserSetup class.
+    """
+    Handles the setup and creation of new users.
 
-        Args:
-            form (SignUpForm): The form containing user registration data.
-            db_handler (Database): The database handler.
-        """
-        self._regist_form = form
+    Use `create_user()` method to insert a new user into the database, which creates entries in `user_creds`, `user_info`, and `user_about` collections.
+    """
+
+    def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
 
     def _create_user_creds(self, username: str, email: str, hashed_password: str) -> dict:
-        """
-        Create a dictionary of user credentials.
-
-        Args:
-            username (str): The user's username.
-            email (str): The user's email.
-            hashed_password (str): The hashed password.
-
-        Returns:
-            dict: A dictionary containing the user's credentials.
-        """
         new_user_creds = UserCreds(username=username, email=email, password=hashed_password)
         return asdict(new_user_creds)
 
     def _create_user_info(self, username: str, email: str, blogname: str) -> dict:
-        """
-        Create a dictionary of user information.
-
-        Args:
-            username (str): The user's username.
-            email (str): The user's email.
-            blogname (str): The user's blog name.
-
-        Returns:
-            dict: A dictionary containing the user's information.
-        """
         new_user_info = UserInfo(username=username, email=email, blogname=blogname)
         return asdict(new_user_info)
 
     def _create_user_about(self, username: str) -> dict:
-        """
-        Create a dictionary of user about information.
-
-        Args:
-            username (str): The user's username.
-
-        Returns:
-            dict: A dictionary containing the user's about information.
-        """
         new_user_about = UserAbout(username=username)
         return asdict(new_user_about)
 
     @staticmethod
     def _hash_password(password: str) -> str:
-        """
-        Hash the user's password.
-
-        Args:
-            password (str): The plaintext password.
-
-        Returns:
-            str: The hashed password.
-        """
         hashed_pw = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(12))
         return hashed_pw.decode("utf-8")
 
-    def create_user(self) -> str:
+    def create_user(self, form: SignUpForm) -> str:
         """
-        Create a new user in the database.
+        Receives the user registration form data,
+        organizes it into `user_creds`, `user_info`, and `user_about` dataclasses,
+        which will initialize the necessary fields for a new user,
+        converts them to dictionaries,
+        finally inserts them into the database.
 
         Returns:
             str: The username of the newly created user.
         """
-        hashed_pw = self._hash_password(self._regist_form.password.data)
-        new_user_creds = self._create_user_creds(
-            self._regist_form.username.data, self._regist_form.email.data, hashed_pw
-        )
+        hashed_pw = self._hash_password(form.password.data)
+        new_user_creds = self._create_user_creds(form.username.data, form.email.data, hashed_pw)
         new_user_info = self._create_user_info(
-            self._regist_form.username.data,
-            self._regist_form.email.data,
-            self._regist_form.blogname.data,
+            form.username.data,
+            form.email.data,
+            form.blogname.data,
         )
-        new_user_about = self._create_user_about(self._regist_form.username.data)
+        new_user_about = self._create_user_about(form.username.data)
 
         self._db_handler.user_creds.insert_one(new_user_creds)
         self._db_handler.user_info.insert_one(new_user_info)
         self._db_handler.user_about.insert_one(new_user_about)
 
-        return self._regist_form.username.data
-
-
-##################################################################################################
-
-# deleting user
-
-##################################################################################################
+        return form.username.data
 
 
 class UserDeletionSetup:
-    def __init__(self, username: str, db_handler: Database, logger: Logger) -> None:
-        """
-        Initialize the UserDeletionSetup class.
+    """
+    Handles the setup and execution of user deletion.
+    """
 
-        Args:
-            username (str): The username of the user to be deleted.
-            db_handler (Database): The database handler.
-            logger (Logger): The logger instance.
-        """
+    def __init__(self, username: str, db_handler: Database, logger: Logger) -> None:
         self._user_to_be_deleted = username
         self._db_handler = db_handler
         self._logger = logger
 
     def _get_posts_uid_by_user(self) -> list[str]:
-        """
-        Get a list of post UIDs authored by the user.
-
-        Returns:
-            list[str]: A list of post UIDs.
-        """
         posts = self._db_handler.post_info.find({"author": self._user_to_be_deleted})
         return [post.get("post_uid") for post in posts]
 
     def _remove_all_posts(self) -> None:
-        """
-        Remove all posts authored by the user.
-        """
         self._db_handler.post_info.delete_many({"author": self._user_to_be_deleted})
         self._db_handler.post_content.delete_many({"author": self._user_to_be_deleted})
         self._logger.debug(f"Deleted all posts written by user {self._user_to_be_deleted}.")
 
     def _remove_all_related_comments(self, post_uids: list[str]) -> None:
-        """
-        Remove all comments related to the user's posts.
-
-        Args:
-            post_uids (list[str]): A list of post UIDs.
-        """
         for post_uid in post_uids:
             self._db_handler.comment.delete_many({"post_uid": post_uid})
         self._logger.debug(f"Deleted comments under posts by user {self._user_to_be_deleted}.")
 
     def _remove_all_user_data(self) -> None:
-        """
-        Remove all user data from the database.
-        """
         self._db_handler.user_creds.delete_one({"username": self._user_to_be_deleted})
         self._db_handler.user_info.delete_one({"username": self._user_to_be_deleted})
         self._db_handler.user_about.delete_one({"username": self._user_to_be_deleted})
@@ -171,7 +95,12 @@ class UserDeletionSetup:
 
     def start_deletion_process(self) -> None:
         """
-        Start the user deletion process.
+        Start the user deletion process, which includes:
+        - Removing all posts authored by the user.
+        - Removing all comments related to the user's posts.
+        - Removing all user data.
+
+        No return value.
         """
         posts_uid = self._get_posts_uid_by_user()
         self._remove_all_posts()
@@ -179,36 +108,31 @@ class UserDeletionSetup:
         self._remove_all_user_data()
 
 
-##################################################################################################
-
-# user utils
-
-##################################################################################################
-
-
 class UserUtils:
-    def __init__(self, db_handler: Database) -> None:
-        """
-        Initialize the UserUtils class.
+    """
+    Provides utility methods for handling users.
+    """
 
-        Args:
-            db_handler (Database): The database handler.
-        """
+    def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
 
     def get_all_username(self) -> list[str]:
         """
-        Get a list of all usernames.
+        Retrieves all usernames.
+
+        This is mostly used to generate the sitemap.
 
         Returns:
-            list[str]: A list of all usernames.
+            list[dict]: A list of usernames
         """
         all_user_info = self._db_handler.user_info.find({})
         return [user_info.get("username") for user_info in all_user_info]
 
     def get_all_username_gallery_enabled(self) -> list[str]:
         """
-        Get a list of all usernames with gallery enabled.
+        Retrieves all usernames with gallery enabled.
+
+        This is mostly used to generate the sitemap.
 
         Returns:
             list[str]: A list of usernames with gallery enabled.
@@ -218,7 +142,9 @@ class UserUtils:
 
     def get_all_username_changelog_enabled(self) -> list[str]:
         """
-        Get a list of all usernames with changelog enabled.
+        Retrieves all usernames with changelog enabled.
+
+        This is mostly used to generate the sitemap.
 
         Returns:
             list[str]: A list of usernames with changelog enabled.
@@ -228,10 +154,7 @@ class UserUtils:
 
     def get_user_info(self, username: str) -> UserInfo:
         """
-        Get user information by username.
-
-        Args:
-            username (str): The username.
+        Retrieve `user_info` document by username and return it as a `UserInfo` object.
 
         Returns:
             UserInfo: The user information.
@@ -244,10 +167,7 @@ class UserUtils:
 
     def get_user_about(self, username: str) -> UserAbout:
         """
-        Get user about information by username.
-
-        Args:
-            username (str): The username.
+        Retrieve `user_about` document by username and return it as a `UserAbout` object.
 
         Returns:
             UserAbout: The user about information.
@@ -260,10 +180,7 @@ class UserUtils:
 
     def get_user_creds(self, email: str) -> UserCreds:
         """
-        Get user credentials by email.
-
-        Args:
-            email (str): The email address.
+        Retrieve `user_creds` document by email and return it as a `UserCreds` object.
 
         Returns:
             UserCreds: The user credentials.
@@ -276,10 +193,9 @@ class UserUtils:
 
     def delete_user(self, username: str, logger: Logger) -> None:
         """
-        Delete a user by username.
+        Wraps `UserDeletionSetup` setup class to delete a user from the database.
 
-        Args:
-            username (str): The username of the user to be deleted.
+        No return value.
         """
         user_deletion = UserDeletionSetup(
             username=username, db_handler=self._db_handler, logger=logger
@@ -288,10 +204,7 @@ class UserUtils:
 
     def create_user(self, form: SignUpForm) -> str:
         """
-        Create a new user.
-
-        Args:
-            form (SignUpForm): The form containing user registration data.
+        Wraps `NewUserSetup` setup class to create a new user in the database.
 
         Returns:
             str: The username of the newly created user.
@@ -301,11 +214,10 @@ class UserUtils:
 
     def total_view_increment(self, username: str) -> None:
         """
-        Increment the total view count for a user.
+        Increases the total view count for a user.
         Now the counts won't increase if the user is logged in and viewing their own blog.
 
-        Args:
-            username (str): The username.
+        No return value.
         """
         if current_user.is_authenticated and current_user.username == username:
             return

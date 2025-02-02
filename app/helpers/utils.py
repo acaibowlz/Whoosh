@@ -9,26 +9,20 @@ from typing_extensions import Self
 
 from app.mongo import Database
 
-##################################################################################################
-
-# uid generator
-
-##################################################################################################
-
 
 class UIDGenerator:
-    def __init__(self, db_handler: Database) -> None:
-        """
-        Initialize the UIDGenerator with a database handler.
+    """
+    A generic class to generate UID for new entries in the database.
 
-        Args:
-            db_handler (Database): The database handler.
-        """
+    It checks the database to ensure the generated UID is unique before returning it.
+    """
+
+    def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
 
     def generate_comment_uid(self) -> str:
         """
-        Look into the comment database and generate a unique ID for a new comment.
+        Looks into the comment database and generates an UID for a new comment.
 
         Returns:
             str: A unique comment UID string.
@@ -41,7 +35,7 @@ class UIDGenerator:
 
     def generate_post_uid(self) -> str:
         """
-        Look into the post database and generate a unique ID for a new post.
+        Looks into the post database and generates an UID for a new post.
 
         Returns:
             str: A unique post UID string.
@@ -54,7 +48,7 @@ class UIDGenerator:
 
     def generate_project_uid(self) -> str:
         """
-        Look into the project database and generate a unique ID for a new project.
+        Looks into the project database and generates an UID for a new project.
 
         Returns:
             str: A unique project UID string.
@@ -66,6 +60,12 @@ class UIDGenerator:
                 return project_uid
 
     def generate_changelog_uid(self) -> str:
+        """
+        Looks into the changelog database and generates an UID for a new changelog entry.
+
+        Returns:
+            str: A unique changelog UID string.
+        """
         alphabet = string.ascii_lowercase + string.digits
         while True:
             changelog_uid = "".join(random.choices(alphabet, k=8))
@@ -73,26 +73,23 @@ class UIDGenerator:
                 return changelog_uid
 
 
-##################################################################################################
-
-# formatter tool
-
-##################################################################################################
-
-
 class HTMLFormatter:
-    def __init__(self, html: str) -> None:
-        """
-        Initialize the HTMLFormatter.
+    """
+    A collection of methods to add bootstrap classes of modifications to HTML content.
 
-        Args:
-            html (str): A string that is already HTML.
-        """
+    Modifications can be applied through chained method calls.
+
+    This formatter is meant for styling blog posts, about page, and project pages.
+
+    It takes in an HTML string. Once the modifications are done, use the `to_string()` method to get the formatted HTML as string.
+    """
+
+    def __init__(self, html: str) -> None:
         self._soup = BeautifulSoup(html, "html.parser")
 
     def add_padding(self) -> Self:
         """
-        Add padding to HTML elements except 'figure' and 'img'.
+        Append `py-1` class to HTML elements except 'figure' and 'img'.
 
         Returns:
             HTMLFormatter: The formatter instance.
@@ -107,7 +104,7 @@ class HTMLFormatter:
 
     def change_headings(self) -> Self:
         """
-        Change the heading levels in the HTML.
+        Changes the heading levels and styles.
 
         Returns:
             HTMLFormatter: The formatter instance.
@@ -161,7 +158,7 @@ class HTMLFormatter:
 
     def modify_hyperlink(self) -> Self:
         """
-        Apply color theme to hyperlinks in the post.
+        Apply color theme to hyperlinks.
 
         Returns:
             HTMLFormatter: The formatter instance.
@@ -186,10 +183,7 @@ class HTMLFormatter:
 
 def convert_post_content(content: str) -> str:
     """
-    Convert the original text to HTML for display on the blog post page.
-
-    Args:
-        content (str): The original markdown content.
+    Convert the text stored as Markdown format to HTML string and add additional styling tp look better as a blog post.
 
     Returns:
         str: The converted HTML content.
@@ -204,10 +198,7 @@ def convert_post_content(content: str) -> str:
 
 def convert_about(about: str) -> str:
     """
-    Convert the original text to HTML for display on the about page.
-
-    Args:
-        about (str): The original markdown content.
+    Convert the text stored as Markdown format to HTML string and add additional styling to look better on the about page.
 
     Returns:
         str: The converted HTML content.
@@ -222,10 +213,7 @@ def convert_about(about: str) -> str:
 
 def convert_project_content(content: str) -> str:
     """
-    Convert the original text to HTML for display on the project page.
-
-    Args:
-        content (str): The original markdown content.
+    Convert the text stored as Markdown format to HTML string and add additional styling to look better on the project page.
 
     Returns:
         str: The converted HTML content.
@@ -239,7 +227,12 @@ def convert_project_content(content: str) -> str:
 
 
 def convert_changelog_content(content: str) -> str:
+    """
+    Convert the text stored as Markdown format to HTML string and add additional styling to look better on the changelog page.
 
+    Returns:
+        str: The converted HTML content.
+    """
     md = Markdown(extensions=["markdown_captions", "fenced_code", "footnotes"])
     html = md.convert(content)
     formatter = HTMLFormatter(html)
@@ -248,21 +241,19 @@ def convert_changelog_content(content: str) -> str:
     return html
 
 
-##################################################################################################
-
-# pagination tool
-
-##################################################################################################
-
-
 class Paging:
-    def __init__(self, db_handler: Database) -> None:
-        """
-        Initialize the Paging class with a database handler.
+    """
+    A class to handle pagination for the user's posts, projects, and changelogs.
 
-        Args:
-            db_handler (Database): The database handler.
-        """
+    Use `setup` method to set up the pagination. Then, use the properties to check if the previous and next pages are allowed.
+
+    Properties available after setting up the pagination instance:
+    - `is_previous_page_allowed`
+    - `is_next_page_allowed`
+    - `current_page`
+    """
+
+    def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
         self._has_setup = False
         self._allow_previous_page = None
@@ -271,20 +262,10 @@ class Paging:
 
     def setup(self, username: str, database: str, current_page: int, num_per_page: int) -> Self:
         """
-        Set up pagination for a user and database.
-
-        Args:
-            username (str): The username.
-            database (str): The name of the database.
-            current_page (int): The current page number.
-            num_per_page (int): The number of items per page.
+        Setting up the pagination requires the username, the database to query, the current page number, and the number of entries per page.
 
         Returns:
-            Paging: The paging instance.
-
-        Raises:
-            Exception: If the database option is unknown.
-            abort: If the current page is not a legal page number.
+            Paging: The paging instance
         """
         self._has_setup = True
         self._database = database
@@ -328,64 +309,28 @@ class Paging:
 
     @property
     def is_previous_page_allowed(self) -> bool:
-        """
-        Check if the previous page is allowed.
-
-        Returns:
-            bool: True if the previous page is allowed, False otherwise.
-
-        Raises:
-            AttributeError: If pagination has not been set up yet.
-        """
         if not self._has_setup:
             raise AttributeError("Pagination has not been set up yet.")
         return self._allow_previous_page
 
     @property
     def is_next_page_allowed(self) -> bool:
-        """
-        Check if the next page is allowed.
-
-        Returns:
-            bool: True if the next page is allowed, False otherwise.
-
-        Raises:
-            AttributeError: If pagination has not been set up yet.
-        """
         if not self._has_setup:
             raise AttributeError("Pagination has not been set up yet.")
         return self._allow_next_page
 
     @property
     def current_page(self) -> int:
-        """
-        Get the current page number.
-
-        Returns:
-            int: The current page number.
-
-        Raises:
-            AttributeError: If pagination has not been set up yet.
-        """
         if not self._has_setup:
             raise AttributeError("Pagination has not been set up yet.")
         return self._current_page
-
-
-##################################################################################################
-
-# some other utility functions
-
-##################################################################################################
 
 
 def slicing_title(text: str, max_len: int) -> str:
     """
     Truncate the input string to the given max length, with trailing ellipsis if truncated.
 
-    Args:
-        text (str): The string to be truncated.
-        max_len (int): The maximum length of the string (excluding ellipsis).
+    This function is used to truncate the title being too long.
 
     Returns:
         str: The truncated string.
@@ -399,8 +344,7 @@ def sort_dict(_dict: dict[str, int]) -> dict[str, int]:
     """
     Sort the dictionary by value in descending order.
 
-    Args:
-        _dict (dict): The unsorted dictionary.
+    This function is used to sort the tags by the number of posts associated with them.
 
     Returns:
         dict: The sorted dictionary.
@@ -415,9 +359,6 @@ def sort_dict(_dict: dict[str, int]) -> dict[str, int]:
 def process_tags(tag_string: str) -> list[str]:
     """
     Process a comma-separated tag string into a list of tags.
-
-    Args:
-        tag_string (str): The comma-separated tag string.
 
     Returns:
         list[str]: The list of processed tags.

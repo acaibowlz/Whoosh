@@ -21,12 +21,13 @@ SOCIAL_LINK_PLATFORM_CHOICES = [
 
 class LoginForm(FlaskForm):
     """
-    Form for user login.
+    Form for user login. Inherits from FlaskForm.
 
     Fields:
-        email (StringField): User's email address.
-        password (PasswordField): User's password.
-        submit_ (SubmitField): Login button.
+        - email: StringField, required.
+        - password: PasswordField, required.
+        - persistent: BooleanField, optional.
+        - submit_: SubmitField.
     """
 
     email = StringField(render_kw={"placeholder": "Email"}, validators=[InputRequired(), Email()])
@@ -37,15 +38,15 @@ class LoginForm(FlaskForm):
 
 class SignUpForm(FlaskForm):
     """
-    Form for user sign-up.
+    Form for user sign-up. Inherits from FlaskForm.
 
     Fields:
-        email (StringField): User's email address.
-        password (PasswordField): User's password.
-        username (StringField): Desired username.
-        blogname (StringField): Name of the user's blog.
-        terms (BooleanField): Acknowledgement of project status.
-        submit_ (SubmitField): Sign-up button.
+        - email: StringField, required.
+        - password: PasswordField, required.
+        - username: StringField, required.
+        - blogname: StringField, required.
+        - terms: BooleanField, required.
+        - submit_: SubmitField.
     """
 
     email = StringField(render_kw={"placeholder": "Email"}, validators=[InputRequired(), Email()])
@@ -85,13 +86,13 @@ class SignUpForm(FlaskForm):
 
 class EditAboutForm(FlaskForm):
     """
-    Form for editing user profile information.
+    Form for editing user profile information. Inherits from FlaskForm.
 
     Fields:
-        profile_img_url (StringField): URL for the profile image.
-        short_bio (StringField): Short biography for the home page.
-        editor (TextAreaField): Additional notes or content.
-        submit_ (SubmitField): Save changes button.
+        - profile_img_url: StringField, optional.
+        - short_bio: StringField, optional.
+        - editor: TextAreaField, optional. Connected to EasyMDE.
+        - submit_: SubmitField.
     """
 
     profile_img_url = StringField(render_kw={"placeholder": "Insert image URL"})
@@ -106,14 +107,14 @@ class EditAboutForm(FlaskForm):
 
 class GeneralSettingsForm(FlaskForm):
     """
-    Form for updating general settings.
+    Form for updating general settings. Inherits from FlaskForm.
 
     Fields:
-        cover_url (StringField): URL for the cover image.
-        blogname (StringField): Blog name.
-        gallery_enabled (BooleanField): Option to enable gallery.
-        changelog_enabled (BooleanField): Option to enable changelog.
-        submit_settings (SubmitField): Save settings button.
+        - cover_url: StringField, optional.
+        - blogname: StringField, required.
+        - gallery_enabled: BooleanField, optional.
+        - changelog_enabled: BooleanField, optional.
+        - submit_settings: SubmitField. The name is not submit_ is due to that we have several forms in this page.
     """
 
     cover_url = StringField(render_kw={"placeholder": "Insert image URL"})
@@ -125,12 +126,12 @@ class GeneralSettingsForm(FlaskForm):
 
 class UpdateSocialLinksForm(FlaskForm):
     """
-    Form for updating social media links.
+    Form for updating social media links. Inherits from FlaskForm.
 
     Fields:
-        url0, url1, url2, url3, url4 (StringField): URLs for social media profiles.
-        platform0, platform1, platform2, platform3, platform4 (SelectField): Social media platforms.
-        submit_links (SubmitField): Save links button.
+        - url0, url1, url2, url3, url4: StringField, optional.
+        - platform0, platform1, platform2, platform3, platform4: SelectField, optional.
+        - submit_links: SubmitField. The name is not submit_ is due to that we have several forms in this page.
     """
 
     url0 = StringField(validators=[Optional(), URL()], render_kw={"placeholder": "https://..."})
@@ -148,13 +149,13 @@ class UpdateSocialLinksForm(FlaskForm):
 
 class UpdatePasswordForm(FlaskForm):
     """
-    Form for updating user password.
+    Form for updating user password. Inherits from FlaskForm.
 
     Fields:
-        current_pw (PasswordField): Current password.
-        new_pw (PasswordField): New password.
-        new_pw_repeat (PasswordField): Confirmation of the new password.
-        submit_pw (SubmitField): Save changes button.
+        - current_pw: PasswordField, required.
+        - new_pw: PasswordField, required.
+        - new_pw_repeat: PasswordField, required.
+        - submit_pw: SubmitField. The name is not submit_ is due to that we have several forms in this page.
     """
 
     current_pw = PasswordField()
@@ -181,11 +182,11 @@ class UpdatePasswordForm(FlaskForm):
 
 class UserDeletionForm(FlaskForm):
     """
-    Form for deleting a user account.
+    Form for deleting a user account. Inherits from FlaskForm.
 
     Fields:
-        password (PasswordField): Current password for verification.
-        submit_delete (SubmitField): Delete account button.
+        - password: PasswordField, required.
+        - submit_delete: SubmitField. The name is not submit_ is due to that we have several forms in this page.
     """
 
     password = PasswordField(validators=[InputRequired()])

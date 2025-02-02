@@ -10,15 +10,10 @@ from app.mongo import Database
 
 
 class NewChangelogSetup:
-    """Handles the setup and creation of new changelog entries.
+    """
+    Handles the setup and creation of new changelog entries.
 
-    Args:
-        changelog_uid_generator (UIDGenerator): Generator for creating unique changelog IDs.
-        db_handler (Database): Database handler for database operations.
-
-    Attributes:
-        _changelog_uid (str): The unique ID for the new changelog.
-        _db_handler (Database): The database handler used for inserting new changelog entries.
+    Use `create_changelog()` method to insert a new changelog entry into the database.
     """
 
     def __init__(self, changelog_uid_generator: UIDGenerator, db_handler: Database) -> None:
@@ -26,15 +21,6 @@ class NewChangelogSetup:
         self._db_handler = db_handler
 
     def _create_changelog(self, form: NewChangelogForm, author_name: str) -> dict:
-        """Creates a new changelog entry from the provided form data.
-
-        Args:
-            form (NewChangelogForm): The form containing the data for the new changelog.
-            author_name (str): The name of the author of the changelog.
-
-        Returns:
-            dict: A dictionary representation of the new changelog.
-        """
         new_changelog = Changelog(
             changelog_uid=self._changelog_uid,
             title=form.title.data,
@@ -49,14 +35,11 @@ class NewChangelogSetup:
         return asdict(new_changelog)
 
     def create_changelog(self, form: NewChangelogForm, author_name: str) -> str:
-        """Creates and inserts a new changelog entry into the database.
-
-        Args:
-            form (NewChangelogForm): The form containing the data for the new changelog.
-            author_name (str): The name of the author of the changelog.
+        """
+        Creates and inserts a new changelog entry into the database.
 
         Returns:
-            str: The unique ID of the newly created changelog.
+            str: The UID of the newly created changelog.
         """
         new_changelog_entry = self._create_changelog(form, author_name)
         self._db_handler.changelog.insert_one(new_changelog_entry)
@@ -64,13 +47,11 @@ class NewChangelogSetup:
 
 
 def create_changelog(form: NewChangelogForm, db_handler: Database) -> str:
-    """Creates a new changelog entry and inserts it into the database.
-
-    Args:
-        form (NewChangelogForm): The form containing the data for the new changelog.
+    """
+    Wraps `NewChangelogSetup` setup class to create a new changelog entry in the database.
 
     Returns:
-        str: The unique ID of the newly created changelog.
+        str: The UID of the newly created changelog.
     """
     uid_generator = UIDGenerator(db_handler=db_handler)
     new_changelog_setup = NewChangelogSetup(
@@ -83,24 +64,18 @@ def create_changelog(form: NewChangelogForm, db_handler: Database) -> str:
 
 
 class ChangelogUpdateSetup:
-    """Handles the update of existing changelog entries in the database.
+    """
+    Handles the update of existing changelog entries in the database.
 
-    Args:
-        db_handler (Database): Database handler for database operations.
-
-    Attributes:
-        _db_handler (Database): The database handler used for updating changelog entries.
+    Use `update_changelog()` method to update an existing changelog entry with new data.
     """
 
     def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
 
     def update_changelog(self, changelog_uid: str, form: EditChangelogForm) -> None:
-        """Updates an existing changelog entry with new data.
-
-        Args:
-            changelog_uid (str): The unique ID of the changelog to update.
-            form (EditChangelogForm): The form containing the updated data for the changelog.
+        """
+        Updates an existing changelog entry with new data. No return value.
         """
         updated_changelog = {
             "title": form.title.data,
@@ -118,38 +93,31 @@ class ChangelogUpdateSetup:
 
 
 def update_changelog(changelog_uid: str, form: EditChangelogForm, db_handler: Database) -> None:
-    """Updates an existing changelog entry using the provided form data.
+    """
+    Wraps `ChangelogUpdateSetup` setup class to update an existing changelog entry in the database.
 
-    Args:
-        changelog_uid (str): The unique ID of the changelog to update.
-        form (EditChangelogForm): The form containing the updated data for the changelog.
+    No return value.
     """
     changelog_update_setup = ChangelogUpdateSetup(db_handler=db_handler)
     changelog_update_setup.update_changelog(changelog_uid=changelog_uid, form=form)
 
 
 class ChangelogUtils:
-    """Provides utility methods for retrieving changelog entries from the database.
-
-    Args:
-        db_handler (Database): Database handler for database operations.
-
-    Attributes:
-        _db_handler (Database): The database handler used for retrieving changelog entries.
+    """
+    Provides utility methods for handling changelogs.
     """
 
     def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
 
     def get_changelogs(self, username: str, by_date: bool = False) -> list[dict]:
-        """Retrieves changelog entries for a specific user.
+        """
+        Retrieves all non-archived changelog entries for the given user.
 
-        Args:
-            username (str): The username of the user whose changelogs are to be retrieved.
-            by_date (bool, optional): Whether to sort changelogs by date. Defaults to False.
+        Entries are sorted either by `date` or `created_at` field. Default is `created_at`.
 
         Returns:
-            list[dict]: A list of dictionaries representing the user's changelog entries.
+            list[dict]: A list of dictionaries representing `changelog`.
         """
         if by_date:
             result = (
@@ -166,13 +134,13 @@ class ChangelogUtils:
         return result
 
     def get_archived_changelogs(self, username: str) -> list[dict]:
-        """Retrieves archived changelog entries for a specific user.
+        """
+        Retrieves all archived changelog entries for the given user.
 
-        Args:
-            username (str): The username of the user whose archived changelogs are to be retrieved.
+        Entries are sorted by `created_at` timestamps.
 
         Returns:
-            list[dict]: A list of dictionaries representing the user's archived changelog entries.
+            list[dict]: A list of dictionaries representing `changelog`.
         """
         result = (
             self._db_handler.changelog.find({"author": username, "archived": True})
@@ -184,15 +152,14 @@ class ChangelogUtils:
     def get_changelogs_with_pagination(
         self, username: str, page_number: int, changelogs_per_page: int
     ) -> list[dict]:
-        """Retrieves a paginated list of changelog entries for a specific user.
+        """
+        Retrieves all non-archived changelog entries for the given user with pagination.
+        The page number and the number of changelogs per page are therefore required.
 
-        Args:
-            username (str): The username of the user whose changelogs are to be retrieved.
-            page_number (int): The page number to retrieve.
-            changelogs_per_page (int): The number of changelogs per page.
+        Entries are sorted by `created_at` timestamps.
 
         Returns:
-            list[dict]: A list of dictionaries representing the user's paginated changelog entries.
+            list[dict]: A list of dictionaries representing `changelog`.
         """
         if page_number == 1:
             result = (

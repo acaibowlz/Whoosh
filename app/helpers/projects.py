@@ -11,10 +11,9 @@ from app.mongo import Database
 
 def process_form_images(form: NewProjectForm | EditProjectForm) -> list[tuple[str, str]]:
     """
-    Process images from the project form.
+    Process url and caption fields from the form and return them as a single list.
 
-    Args:
-        form (NewProjectForm | EditProjectForm): The form containing project data.
+    If there are less than 5 images, the remaining slots will be filled with empty tuples.
 
     Returns:
         list[tuple[str, str]]: A list of tuples containing image URLs and captions.
@@ -30,36 +29,18 @@ def process_form_images(form: NewProjectForm | EditProjectForm) -> list[tuple[st
     return images
 
 
-##################################################################################################
-
-# creating a new project
-
-##################################################################################################
-
-
 class NewProjectSetup:
-    def __init__(self, project_uid_generator: UIDGenerator, db_handler: Database) -> None:
-        """
-        Initialize the NewProjectSetup class.
+    """
+    Handles the setup and creation of new projects.
 
-        Args:
-            project_uid_generator (UIDGenerator): The UID generator for projects.
-            db_handler (Database): The database handler.
-        """
+    Use `create_project()` method to insert a new project into the database, which creates entries in `project_info` and `project_content` collections.
+    """
+
+    def __init__(self, project_uid_generator: UIDGenerator, db_handler: Database) -> None:
         self._project_uid = project_uid_generator.generate_project_uid()
         self._db_handler = db_handler
 
     def _create_project_info(self, form: NewProjectForm, author_name: str) -> dict:
-        """
-        Create a dictionary of project information.
-
-        Args:
-            form (NewProjectForm): The form containing project data.
-            author_name (str): The author's username.
-
-        Returns:
-            dict: A dictionary containing the project's information.
-        """
         new_project_info = ProjectInfo(
             project_uid=self._project_uid,
             author=author_name,
@@ -72,16 +53,6 @@ class NewProjectSetup:
         return asdict(new_project_info)
 
     def _create_project_content(self, form: NewProjectForm, author_name: str) -> dict:
-        """
-        Create a dictionary of project content.
-
-        Args:
-            form (NewProjectForm): The form containing project data.
-            author_name (str): The author's username.
-
-        Returns:
-            dict: A dictionary containing the project's content.
-        """
         new_project_content = ProjectContent(
             project_uid=self._project_uid,
             author=author_name,
@@ -89,16 +60,14 @@ class NewProjectSetup:
         )
         return asdict(new_project_content)
 
-    def create_project(self, form: NewProjectForm, author_name: str) -> str | None:
+    def create_project(self, form: NewProjectForm, author_name: str) -> str:
         """
-        Create a new project in the database.
-
-        Args:
-            author_name (str): The author's username.
-            form (NewProjectForm): The form containing project data.
+        Receives the form data and the author name,
+        organizes them into `project_info` and `project_content` dataclasses, converts them to dictionaries,
+        finally inserts them into the database.
 
         Returns:
-            str | None: The UID of the newly created project, or None if creation failed.
+            str: The UID of the newly created project.
         """
         new_project_info = self._create_project_info(form, author_name)
         new_project_content = self._create_project_content(form, author_name)
@@ -110,10 +79,9 @@ class NewProjectSetup:
 
 def create_project(form: NewProjectForm, db_handler: Database) -> str:
     """
-    Create a new project.
+    Wraps `NewProjectSetup` setup class to create a new project in the database.
 
-    Args:
-        form (NewProjectForm): The form containing project data.
+    Note that one project is stored as two separate documents: `project_info` and `project_content`.
 
     Returns:
         str: The UID of the newly created project.
@@ -124,30 +92,21 @@ def create_project(form: NewProjectForm, db_handler: Database) -> str:
     return new_project_uid
 
 
-##################################################################################################
-
-# updating a project
-
-##################################################################################################
-
-
 class ProjectUpdateSetup:
-    def __init__(self, db_handler: Database) -> None:
-        """
-        Initialize the ProjectUpdateSetup class.
+    """
+    Handles the update of existing projects in the database.
 
-        Args:
-            db_handler (Database): The database handler.
-        """
+    Use `update_project()` method to update an existing project with new data.
+    """
+
+    def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
 
     def update_project(self, project_uid: str, form: EditProjectForm) -> None:
         """
         Update an existing project.
 
-        Args:
-            project_uid (str): The UID of the project to update.
-            form (EditProjectForm): The form containing updated project data.
+        No return value.
         """
         updated_project_info = {
             "title": form.title.data,
@@ -169,42 +128,32 @@ class ProjectUpdateSetup:
 
 def update_project(project_uid: str, form: EditProjectForm, db_handler: Database) -> None:
     """
-    Update an existing project.
+    Wraps `ProjectUpdateSetup` setup class to update an existing project in the database.
 
-    Args:
-        project_uid (str): The UID of the project to update.
-        form (EditProjectForm): The form containing updated project data.
+    No return value.
     """
     project_update_setup = ProjectUpdateSetup(db_handler=db_handler)
     project_update_setup.update_project(project_uid=project_uid, form=form)
 
 
-##################################################################################################
-
-# project utilities
-
-##################################################################################################
-
-
 class ProjectsUtils:
-    def __init__(self, db_handler: Database) -> None:
-        """
-        Initialize the ProjectsUtils class.
+    """
+    Provides utility methods for handling projects.
+    """
 
-        Args:
-            db_handler (Database): The database handler.
-        """
+    def __init__(self, db_handler: Database) -> None:
         self._db_handler = db_handler
 
     def get_all_projects_info(self, include_archive=False) -> list[dict]:
         """
-        Get information about all projects.
+        Retrieves all `project_info` documents from all users.
 
-        Args:
-            include_archive (bool, optional): Whether to include archived projects. Defaults to False.
+        This is mostly used to generate the sitemap.
+
+        Archived projects are excluded by default, but can be included if needed.
 
         Returns:
-            list[dict]: A list of dictionaries containing project information.
+            list[dict]: A list of dictionaries representing `project_info`.
         """
         if include_archive:
             result = self._db_handler.project_info.find({}).as_list()
@@ -214,13 +163,14 @@ class ProjectsUtils:
 
     def get_project_infos(self, username: str, archive="include") -> list[dict]:
         """
-        Get information about projects for a specific user.
+        Retrieves all projects' `project_info` documents for the given user.
 
-        Args:
-            username (str): The username of the project author.
+        By default, archived projects are excluded, but can be included or returned exclusively if needed.
+
+        Possible values for `archive`: "exclude", "include", "only".
 
         Returns:
-            list[dict]: A list of dictionaries containing project information.
+            list[dict]: A list of dictionaries representing `project_info`.
         """
         if archive == "include":
             result = (
@@ -242,36 +192,17 @@ class ProjectsUtils:
             )
         return result
 
-    def get_archived_project_infos(self, username: str) -> list[dict]:
-        """
-        Get information about archived projects for a specific user.
-
-        Args:
-            username (str): The username of the project author.
-
-        Returns:
-            list[dict]: A list of dictionaries containing project information.
-        """
-        result = (
-            self._db_handler.project_info.find({"author": username, "archived": True})
-            .sort("created_at", -1)
-            .as_list()
-        )
-        return result
-
     def get_project_infos_with_pagination(
         self, username: str, page_number: int, projects_per_page: int
     ) -> list[dict]:
         """
-        Get paginated information about projects for a specific user.
+        Retrieves all projects' `project_info` documents for the given user with pagination.
+        The page number and the number of projects per page are therefore required.
 
-        Args:
-            username (str): The username of the project author.
-            page_number (int): The page number.
-            projects_per_page (int): The number of projects per page.
+        Note that archived projects are excluded.
 
         Returns:
-            list[dict]: A list of dictionaries containing project information.
+            list[dict]: A list of dictionaries representing `project_info`.
         """
         if page_number == 1:
             result = (
@@ -292,13 +223,11 @@ class ProjectsUtils:
 
     def get_full_project(self, project_uid: str) -> dict:
         """
-        Get full information about a project, including its content.
-
-        Args:
-            project_uid (str): The UID of the project.
+        Retrieves the full project data for a specific project UID.
+        `project_info` and `project_content` are merged into one dictionary by `project_uid`.
 
         Returns:
-            dict: A dictionary containing the project's full information.
+            dict: A dictionary representing the full project data.
         """
         project = self._db_handler.project_info.find_one({"project_uid": project_uid})
         project_content = self._db_handler.project_content.find_one(
@@ -307,24 +236,25 @@ class ProjectsUtils:
         project["content"] = project_content
         return project
 
-    def read_increment(self, project_uid: str) -> None:
+    def read_increment(self, author: str, project_uid: str) -> None:
         """
-        Increment the read count for a project.
+        Increases the read count for a specific project.
+        Note that the counts won't increase if the user is logged in and viewing their own blog.
 
-        Args:
-            project_uid (str): The UID of the project.
+        No return value.
         """
+        if current_user.is_authenticated and current_user.username == author:
+            return
         self._db_handler.project_info.make_increments(
             filter={"project_uid": project_uid}, increments={"reads": 1}
         )
 
     def view_increment(self, author: str, project_uid: str) -> None:
         """
-        Increment the view count for a project.
-        Now the counts won't increase if the user is logged in and viewing their own blog.
+        Increases the view count for a specific project.
+        Note that the counts won't increase if the user is logged in and viewing their own blog.
 
-        Args:
-            project_uid (str): The UID of the project.
+        No return value.
         """
         if current_user.is_authenticated and current_user.username == author:
             return

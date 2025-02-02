@@ -9,16 +9,16 @@ slug_pattern = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 class NewPostForm(FlaskForm):
     """
-    Form for creating a new post.
+    Form for creating a new post. Inherits from FlaskWTForm.
 
     Fields:
-        title (StringField): Post title.
-        subtitle (StringField): Post subtitle.
-        tags (StringField): Tags associated with the post.
-        cover_url (StringField): URL for the post cover image.
-        custom_slug (StringField): Custom URL-friendly slug for the post.
-        editor (TextAreaField): Post content.
-        submit_ (SubmitField): Submit button.
+        - title: StringField, required.
+        - subtitle: StringField, required.
+        - tags: StringField, required. Tags are separated by commas.
+        - cover_url: StringField, optional.
+        - custom_slug: StringField, optional.
+        - editor: TextAreaField, required. Connected to EasyMDE.
+        - submit_: SubmitField, with a validation function defined in `/static/js/backstage/posts.js`.
     """
 
     title = StringField(validators=[InputRequired(message="Title is required.")])
@@ -41,16 +41,16 @@ class NewPostForm(FlaskForm):
 
 class EditPostForm(FlaskForm):
     """
-    Form for editing an existing post.
+    Form for editing an existing post. Inherits from FlaskWTForm.
 
     Fields:
-        title (StringField): Post title.
-        subtitle (StringField): Post subtitle.
-        tags (StringField): Tags associated with the post.
-        cover_url (StringField): URL for the post cover image.
-        custom_slug (StringField): Custom URL-friendly slug for the post.
-        editor (TextAreaField): Post content.
-        submit_ (SubmitField): Submit button.
+        - title: StringField, required.
+        - subtitle: StringField, required.
+        - tags: StringField, required. Tags are separated by commas.
+        - cover_url: StringField, optional.
+        - custom_slug: StringField, optional.
+        - editor: TextAreaField, required. Connected to EasyMDE.
+        - submit_: SubmitField, with a validation function defined in `/static/js/backstage/edit-post.js`.
     """
 
     title = StringField(validators=[InputRequired(message="Title is required.")])
@@ -64,7 +64,7 @@ class EditPostForm(FlaskForm):
         validators=[Optional(), URL(message="Invalid URL.")],
     )
     custom_slug = StringField(
-        render_kw={"placeholder": "Must be a URL-friendly string"},
+        render_kw={"placeholder": "Must be a URL-friendly slug"},
         validators=[Optional(), Regexp(slug_pattern, message="Slug must be URL-friendly.")],
     )
     editor = TextAreaField()
