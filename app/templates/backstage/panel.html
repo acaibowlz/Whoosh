@@ -25,7 +25,7 @@
           {% if user.gallery_enabled %}
             <a class="btn w-100 px-2"
                href="{{ url_for("backstage.projects_panel") }}">
-              <span class="ms-2 me-3"><i class="fa-solid fa-palette"></i></span>Projects
+              <span class="ms-2 me-3"><i class="fa-solid fa-hammer"></i></span>Projects
             </a>
           {% endif %}
           {% if user.changelog_enabled %}
@@ -38,7 +38,7 @@
             <span class="ms-2 me-3"><i class="fa-solid fa-user"></i></span>About
           </a>
           <a class="btn w-100 px-2" href="{{ url_for("backstage.theme_panel") }}">
-            <span class="ms-2 me-3"><i class="fa-solid fa-paint-roller"></i></span>Blog Theme
+            <span class="ms-2 me-3"><i class="fa-solid fa-palette"></i></span>Blog Theme
           </a>
           <a class="btn w-100 px-2" href="/backstage/archive">
             <span class="ms-2 me-3"><i class="fa-solid fa-box-archive"></i></i></span>Archive
@@ -92,7 +92,7 @@
                 <a class="btn w-100 px-2"
                    href="{{ url_for("backstage.projects_panel") }}"
                    id="mobile-nav-projects">
-                  <span class="ms-2 me-3"><i class="fa-solid fa-palette"></i></span>Projects
+                  <span class="ms-2 me-3"><i class="fa-solid fa-hammer"></i></span>Projects
                 </a>
               {% endif %}
               {% if user.changelog_enabled %}
@@ -110,7 +110,7 @@
               <a class="btn w-100 px-2"
                  href="{{ url_for("backstage.theme_panel") }}"
                  id="mobile-nav-theme">
-                <span class="ms-2 me-3"><i class="fa-solid fa-paint-roller"></i></span>Blog Theme
+                <span class="ms-2 me-3"><i class="fa-solid fa-palette"></i></span>Blog Theme
               </a>
               <a class="btn w-100 px-2"
                  href="{{ url_for("backstage.archive_panel") }}"

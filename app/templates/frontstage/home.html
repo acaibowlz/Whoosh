@@ -30,7 +30,7 @@
               <h5 class="mt-4 ms-2 fw-bold text-dark-grey">Featured Posts</h5>
               {% for post in posts %}
                 <div class="ms-lg-2 ms-0 my-4 p-4 bg-white border rounded-3">
-                  <a href="{{ url_for('frontstage.blogpost', username=post.author, post_uid=post.post_uid) }}"
+                  <a href="{{ url_for('frontstage.blogpost_no_slug', username=post.author, post_uid=post.post_uid) }}"
                      class="title-link">
                     <h3 class="fw-bold">{{ post.title }}</h3>
                   </a>

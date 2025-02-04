@@ -1,9 +1,9 @@
-// Define the function to handle form submission with a token
+// The function to handle form submission with a token
 function onSubmit(token) {
   document.getElementById("comment-form").submit();
 }
 
-// Define the function to fetch replacement images
+// The function to fetch replacement images
 function fetchReplacementImage(imgElement) {
   const originalSrc = imgElement.getAttribute("src");
   fetch(originalSrc)
@@ -20,21 +20,21 @@ function fetchReplacementImage(imgElement) {
     );
 }
 
-// Define the function to send the read count request
+// The function to send the read count request
 function sendReadCountRequest(postUid) {
-  fetch(`/readcount-increment?post_uid=${postUid}`).catch((error) =>
-    console.error(`Error incrementing read count: ${error}`),
+  fetch(`/readcount-increment?content=post&post_uid=${postUid}`).catch(
+    (error) => console.error(`Error incrementing read count: ${error}`),
   );
 }
 
-// Define the function to prevent form submission on Enter key press
+// The function to prevent form submission on Enter key press
 function preventFormEnter(event) {
   if (event.key === "Enter") {
     event.preventDefault();
   }
 }
 
-// Define the function to setup the Table of Contents
+// The function to setup the Table of Contents
 function setupTableOfContents() {
   const tocContainer = document.querySelector(".toc");
   const topLevelUl = tocContainer.querySelector("ul");

@@ -15,4 +15,4 @@ RECAPTCHA_SECRET: str = os.getenv("RECAPTCHA_SECRET")  # reCAPTCHA secret key
 
 # Application settings
 TEMPLATE_FOLDER: pathlib.Path = (pathlib.Path(__file__).parent / "template").resolve()
-USER_LOGIN_TIMEOUT: int = 60 * 60 * 2  # 2 hours
+USER_LOGIN_TIMEOUT: int = 60 * 60 * 2

@@ -12,6 +12,7 @@ from flask import (
     request,
     url_for,
 )
+from flask_login import current_user
 
 from app.config import TEMPLATE_FOLDER
 from app.forms.comments import CommentForm
@@ -98,7 +99,7 @@ def blog(username: str) -> str:
     )
 
 
-def blogpost_main_actions(username: str, post_uid: str, request: Request) -> str:
+def blogpost(username: str, post_uid: str, request: Request) -> str:
     """Handle the main actions for rendering a blog post.
 
     Args:
@@ -125,7 +126,7 @@ def blogpost_main_actions(username: str, post_uid: str, request: Request) -> str
         flashing_if_errors(form.errors)
 
         comment_utils = CommentUtils(mongodb)
-        comments = comment_utils.find_comments_by_post_uid(post_uid)
+        comments = comment_utils.get_comments_by_post_uid(post_uid)
 
         post_utils.view_increment(username, post_uid)
         user_utils = UserUtils(mongodb)
@@ -137,7 +138,7 @@ def blogpost_main_actions(username: str, post_uid: str, request: Request) -> str
 
 
 @frontstage.route("/@<username>/posts/<post_uid>", methods=["GET", "POST"])
-def blogpost(username: str, post_uid: str) -> str:
+def blogpost_no_slug(username: str, post_uid: str) -> str:
     """Render a blog post page, optionally redirecting if a slug is present.
 
     Args:
@@ -170,8 +171,7 @@ def blogpost(username: str, post_uid: str) -> str:
                 slug=custom_slug,
             )
         )
-
-    return blogpost_main_actions(username, post_uid, request)
+    return blogpost(username, post_uid, request)
 
 
 @frontstage.route("/@<username>/posts/<post_uid>/<slug>", methods=["GET", "POST"])
@@ -199,18 +199,17 @@ def blogpost_with_slug(username: str, post_uid: str, slug: str) -> str:
         logger.debug(f"User {username} does not own post {post_uid}.")
         abort(404)
 
-    custom_slug = post_info.get("custom_slug")
-    if custom_slug != slug:
+    actual_slug = post_info.get("custom_slug")
+    if slug != actual_slug:
         return redirect(
             url_for(
                 "frontstage.blogpost_with_slug",
                 username=username,
                 post_uid=post_uid,
-                slug=custom_slug,
+                slug=actual_slug,
             )
         )
-
-    return blogpost_main_actions(username, post_uid, request)
+    return blogpost(username, post_uid, request)
 
 
 @frontstage.route("/@<username>/tags", methods=["GET"])
@@ -298,7 +297,7 @@ def gallery(username: str) -> str:
     )
 
 
-def project_main_actions(username: str, project_uid: str, request: Request) -> str:
+def project(username: str, project_uid: str, request: Request) -> str:
     """Handle the main actions for rendering a project page.
 
     Args:
@@ -324,7 +323,7 @@ def project_main_actions(username: str, project_uid: str, request: Request) -> s
 
 
 @frontstage.route("/@<username>/project/<project_uid>", methods=["GET"])
-def project(username: str, project_uid: str) -> str:
+def project_no_slug(username: str, project_uid: str) -> str:
     """Render a project page, optionally redirecting if a slug is present.
 
     Args:
@@ -357,8 +356,7 @@ def project(username: str, project_uid: str) -> str:
                 slug=custom_slug,
             )
         )
-
-    return project_main_actions(username, project_uid, request)
+    return project(username, project_uid, request)
 
 
 @frontstage.route("/@<username>/project/<project_uid>/<slug>", methods=["GET"])
@@ -386,18 +384,17 @@ def project_with_slug(username: str, project_uid: str, slug: str) -> str:
         logger.debug(f"User {username} does not own project {project_uid}.")
         abort(404)
 
-    custom_slug = project_info.get("custom_slug")
-    if custom_slug != slug:
+    actual_slug = project_info.get("custom_slug")
+    if slug != actual_slug:
         return redirect(
             url_for(
                 "frontstage.project_with_slug",
                 username=username,
                 project_uid=project_uid,
-                slug=custom_slug,
+                slug=actual_slug,
             )
         )
-
-    return project_main_actions(username, project_uid, request)
+    return project(username, project_uid, request)
 
 
 @frontstage.route("/@<username>/changelog", methods=["GET"])
@@ -495,9 +492,25 @@ def readcount_increment() -> str:
     Returns:
         str: Confirmation message.
     """
-    post_uid = request.args.get("post_uid", type=str)
-    with mongo_connection() as mongodb:
-        author = mongodb.post_info.find_one({"post_uid": post_uid}).get("author")
-        post_utils = PostUtils(mongodb)
-        post_utils.read_increment(author, post_uid)
-    return "OK"
+    content = request.args.get("content", type=str)
+
+    if content == "post":
+        post_uid = request.args.get("post_uid", type=str)
+        with mongo_connection() as mongodb:
+            author = mongodb.post_info.find_one({"post_uid": post_uid}).get("author")
+            if current_user.is_authenticated and current_user.username == author:
+                return "OK"
+            post_utils = PostUtils(mongodb)
+            post_utils.read_increment(author, post_uid)
+
+    elif content == "project":
+        project_uid = request.args.get("project_uid", type=str)
+        with mongo_connection() as mongodb:
+            author = mongodb.project_info.find_one({"project_uid": project_uid}).get("author")
+            if current_user.is_authenticated and current_user.username == author:
+                return "OK"
+            projects_utils = ProjectsUtils(mongodb)
+            projects_utils.view_increment(author, project_uid)
+        return "OK"
+
+    return "Invalid content type.", 400

@@ -34,7 +34,7 @@
           {% if projects | length != 0 %}
             {% for project in projects %}
               <div class="col-lg-4 col-12 my-4">
-                <a href="{{ url_for('frontstage.project', username=user.username, project_uid=project.project_uid) }}">
+                <a href="{{ url_for('frontstage.project_no_slug', username=user.username, project_uid=project.project_uid) }}">
                   <div class="image-card shadow">
                     <img data-src="{{ project.images[0][0] }}"
                          alt="project cover"

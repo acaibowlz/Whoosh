@@ -7,7 +7,7 @@ from flask_login import current_user
 from app.config import RECAPTCHA_SECRET
 from app.forms.comments import CommentForm
 from app.helpers.utils import UIDGenerator
-from app.models.comments import AnonymousComment, Comment
+from app.models.comments import AnonymousComment, RegisteredComment
 from app.mongo import Database
 
 
@@ -48,7 +48,7 @@ class NewCommentSetup:
             return
 
         if current_user.is_authenticated:
-            new_comment = Comment(
+            new_comment = RegisteredComment(
                 name=current_user.username,
                 email=current_user.email,
                 post_uid=post_uid,

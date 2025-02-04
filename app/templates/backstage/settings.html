@@ -21,7 +21,9 @@
         {{ form_general.hidden_tag() }}
         <div class="mb-4">
           <label for="cover_url" class="form-label ms-2 fst-italic text-black">· Change blog cover image</label>
-          <div class="ms-2 my-2 text-grey fw-light">We recommend using 21:9 image, as cover will be automatically cropped.</div>
+          <div class="ms-2 my-2 text-grey fw-light">
+            We recommend using 21:9 image, as cover will be cropped and centered automatically.
+          </div>
           {% if 'static' in user.cover_url %}
             {% set cover_url = "" %}
           {% else %}

@@ -86,9 +86,9 @@ def posts_panel() -> str:
             page_number=current_page,
             posts_per_page=POSTS_EACH_PAGE,
         )
-    for post in posts:
-        post["title"] = slicing_title(post.get("title"), 25)
-        post["comments"] = mongodb.comment.count_documents({"post_uid": post.get("post_uid")})
+        for post in posts:
+            post["title"] = slicing_title(post.get("title"), 25)
+            post["comments"] = mongodb.comment.count_documents({"post_uid": post.get("post_uid")})
 
     logger_utils.pagination(panel="posts", num=len(posts))
 

@@ -35,7 +35,7 @@
         {% endif %}
         {% for post in posts %}
           <div class="ms-lg-2 ms-0 my-4 p-4 bg-white border rounded-3">
-            <a href="{{ url_for('frontstage.blogpost', username=user.username, post_uid=post.post_uid) }}"
+            <a href="{{ url_for('frontstage.blogpost_no_slug', username=user.username, post_uid=post.post_uid) }}"
                class="title-link">
               <h3 class="fw-bold">{{ post.title }}</h3>
             </a>
@@ -62,7 +62,7 @@
         {% endif %}
         {% for project in projects %}
           <div class="ms-lg-2 ms-0 my-4 p-4 bg-white border rounded-3">
-            <a href="{{ url_for('frontstage.project', username=user.username, project_uid=project.project_uid) }}"
+            <a href="{{ url_for('frontstage.project_no_slug', username=user.username, project_uid=project.project_uid) }}"
                class="title-link">
               <h3 class="fw-bold">{{ project.title }}</h3>
             </a>

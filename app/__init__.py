@@ -15,18 +15,18 @@ from app.views import backstage_bp, frontstage_bp, main_bp
 
 
 def create_app() -> Flask:
-    """Create and configure the Flask application.
+    """
+    In this `create_app()` function, we initialize the Flask app configure by the following steps:
+    - Set the secret key for the app.
+    - Initialize the debug toolbar if the environment is set to `dev`.
+    - Initialize the login manager.
+    - Define the user loader function for the login manager.
+    - Define a function to log out inactive users.
+    - Register error handlers for 404 and 500 errors.
+    - Register the blueprints for the app.
+    - Check the MongoDB connection before starting the app.
 
-    This function sets up the application with the following:
-    - Secret key for session management
-    - In-memory caching configuration
-    - Login manager for user authentication
-    - Error handlers for 404 and 500 errors
-    - Registration of blueprints
-    - MongoDB connection check
-
-    Returns:
-        Flask: The configured Flask application instance.
+    If all the steps are completed successfully, the function returns the Flask app instance.
     """
     app = Flask(__name__)
     logger.info("App initialization started.")
@@ -52,13 +52,9 @@ def create_app() -> Flask:
 
     @login_manager.user_loader
     def user_loader(username: str) -> UserInfo:
-        """Load a user by username from the cache or fetch from the database.
-
-        Args:
-            username (str): The username of the user to load.
-
-        Returns:
-            UserInfo: The user information object.
+        """
+        Load user information from the database.
+        Returns an instance of UserInfo if the user exists, otherwise None.
         """
         with mongo_connection() as mongodb:
             user_utils = UserUtils(mongodb)
@@ -67,13 +63,16 @@ def create_app() -> Flask:
 
     @app.before_request
     def logout_inactive() -> None:
-        """Logs out users who have been inactive for a specified timeout period. Resets the timeout if the user is still valid."""
+        """
+        Logs out users who have been inactive for a specified timeout period.
+        Resets the timeout if the user is still valid.
+        """
         if not current_user.is_authenticated:
             return
         if session.get("user_keep_alive"):
             return
         now = datetime.now(timezone.utc)
-        last_active = session["user_last_active"]
+        last_active = session.get("user_last_active", now)
         if (now - last_active) > timedelta(seconds=USER_LOGIN_TIMEOUT):
             username = current_user.username
             logout_user()
@@ -86,28 +85,12 @@ def create_app() -> Flask:
     # Error handlers
     @app.errorhandler(404)
     def page_not_found(error) -> Tuple[str, int]:
-        """Handle 404 errors.
-
-        Args:
-            error: The error that caused the 404 response.
-
-        Returns:
-            Tuple[str, int]: The rendered template and HTTP status code.
-        """
         client_ip = return_client_ip(request, ENV)
         logger.debug(f"{client_ip} - 404 not found at {request.environ['RAW_URI']}. ")
         return render_template("main/404.html"), 404
 
     @app.errorhandler(500)
     def internal_server_error(error) -> Tuple[str, int]:
-        """Handle 500 errors.
-
-        Args:
-            error: The error that caused the 500 response.
-
-        Returns:
-            Tuple[str, int]: The rendered template and HTTP status code.
-        """
         client_ip = return_client_ip(request, ENV)
         logger.error(f"{client_ip} - 500 internal error at {request.environ['RAW_URI']}.")
         return render_template("main/500.html"), 500

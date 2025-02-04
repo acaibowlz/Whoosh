@@ -7,7 +7,8 @@ from app.config import ENV
 
 
 def return_client_ip(request: Request, env: str) -> Optional[str]:
-    """Returns the client's IP address based on the environment.
+    """
+    Returns the client's IP address based on the environment.
 
     Args:
         request (Request): The Flask request object.
@@ -24,32 +25,25 @@ def return_client_ip(request: Request, env: str) -> Optional[str]:
 
 
 def _setup_prod_logger() -> logging.Logger:
-    """Sets up the production logger.
-
-    Returns:
-        logging.Logger: Configured production logger.
     """
-    gunicorn_logger = logging.getLogger("gunicorn.error")
-    logger = gunicorn_logger
+    Sets up the production logger. Returns a logger instance.
 
-    file_formatter = logging.Formatter(
-        fmt="[%(asctime)s] %(levelname)s in %(funcName)s, %(module)s: %(message)s"
-    )
-    file_handler = logging.FileHandler("prod.log", "w", "utf-8")
-    file_handler.setFormatter(file_formatter)
-    file_handler.setLevel(logging.DEBUG)
-    logger.addHandler(file_handler)
+    """
+    logger = logger.getLogger("Whoosh")
+    logger.setLevel(logging.DEBUG)
 
+    formatter = logging.Formatter(fmt="[%(asctime)s] %(levelname)s: %(message)s")
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    stream_handler.setLevel(logging.DEBUG)
+    logger.addHandler(stream_handler)
     return logger
 
 
 def _setup_dev_logger() -> logging.Logger:
-    """Sets up the development logger.
-
-    Returns:
-        logging.Logger: Configured development logger.
     """
-    # To stop showing CLF in the logger
+    Sets up the development logger. Returns a logger instance.
+    """
     werkzeug_logger = logging.getLogger("werkzeug")
     werkzeug_logger.setLevel(logging.ERROR)
 
@@ -58,7 +52,7 @@ def _setup_dev_logger() -> logging.Logger:
         fmt="[%(asctime)s] %(levelname)s in %(funcName)s, %(module)s: %(message)s"
     )
 
-    logger = logging.getLogger("app")
+    logger = logging.getLogger("Whoosh")
     logger.setLevel(logging.DEBUG)
 
     stream_handler = logging.StreamHandler()
@@ -66,7 +60,7 @@ def _setup_dev_logger() -> logging.Logger:
     stream_handler.setLevel(logging.DEBUG)
     logger.addHandler(stream_handler)
 
-    file_handler = logging.FileHandler("develop.log", "w", "utf-8")
+    file_handler = logging.FileHandler("Whoosh.log", "w", "utf-8")
     file_handler.setFormatter(file_formatter)
     file_handler.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
@@ -75,12 +69,12 @@ def _setup_dev_logger() -> logging.Logger:
 
 
 class Logger:
-    def __init__(self, env: str) -> None:
-        """Initializes the logger instance based on the current environment.
+    """
+    Wrapper class for logging based on the environment (dev or prod).
+    Provides methods for logging debug, info, warning, and error messages.
+    """
 
-        Args:
-            env (str): The environment in which the application is running. Possible values: "debug", "prod".
-        """
+    def __init__(self, env: str) -> None:
         if env == "prod":
             self._logger = _setup_prod_logger()
         elif env == "dev":
@@ -89,122 +83,82 @@ class Logger:
             raise ValueError("Invalid environment specified. Use 'dev' or 'prod'.")
 
     def debug(self, msg: str) -> None:
-        """Logs a debug message.
-
-        Args:
-            msg (str): The message to log.
-        """
         self._logger.debug(msg)
 
     def info(self, msg: str) -> None:
-        """Logs an informational message.
-
-        Args:
-            msg (str): The message to log.
-        """
         self._logger.info(msg)
 
     def warning(self, msg: str) -> None:
-        """Logs a warning message.
-
-        Args:
-            msg (str): The message to log.
-        """
         self._logger.warning(msg)
 
     def error(self, msg: str) -> None:
-        """Logs an error message.
-
-        Args:
-            msg (str): The message to log.
-        """
         self._logger.error(msg)
 
 
 class LoggerUtils:
-    def __init__(self, logger: logging.Logger) -> None:
-        """Initializes LoggerUtils with a logger instance.
+    """
+    Wrapper class for common logging events for Whoosh.
+    Provides methods for logging specific events.
+    """
 
-        Args:
-            logger (logging.Logger): The logger instance to use.
-        """
+    def __init__(self, logger: logging.Logger) -> None:
         self._logger = logger
 
     def page_visited(self, request: Request) -> None:
-        """Logs a page visit event.
-
-        Args:
-            request (Request): The Flask request object.
+        """
+        Logs that the current page was visited.
         """
         client_ip = return_client_ip(request, ENV)
         page_url = request.environ.get("RAW_URI", "unknown")
         self._logger.debug(f"{client_ip} - {page_url} was visited.")
 
     def login_failed(self, request: Request, msg: str) -> None:
-        """Logs a failed login attempt.
-
-        Args:
-            request (Request): The Flask request object.
-            msg (str): The failure message.
+        """
+        Logs a failed login attempt. Log level: DEBUG.
+        Needs to pass the reason for the failure to form the message.
         """
         msg = msg.strip().strip(".")
         client_ip = return_client_ip(request, ENV)
         self._logger.debug(f"{client_ip} - Login failed. Msg: {msg}.")
 
     def login_succeeded(self, request: Request, username: str) -> None:
-        """Logs a successful login event.
-
-        Args:
-            request (Request): The Flask request object.
-            username (str): The username of the logged-in user.
+        """
+        Logs a successful login event. Log level: INFO.
         """
         client_ip = return_client_ip(request, ENV)
         self._logger.info(f"{client_ip} - User {username} has logged in.")
 
     def logout(self, request: Request, username: str) -> None:
-        """Logs a user logout event.
-
-        Args:
-            request (Request): The Flask request object.
-            username (str): The username of the logged-out user.
+        """
+        Logs a user logout event. Log level: INFO.
         """
         client_ip = return_client_ip(request, ENV)
         self._logger.info(f"{client_ip} - User {username} has logged out.")
 
     def registration_failed(self, request: Request, msg: str) -> None:
-        """Logs a failed registration attempt.
-
-        Args:
-            request (Request): The Flask request object.
-            msg (str): The failure message.
+        """
+        Logs a failed registration attempt. Log level: DEBUG.
+        Needs to pass the reason for the failure to form the message.
         """
         msg = msg.strip().strip(".")
         client_ip = return_client_ip(request, ENV)
         self._logger.debug(f"{client_ip} - Registration failed. Msg: {msg}.")
 
     def registration_succeeded(self, username: str) -> None:
-        """Logs a successful registration event.
-
-        Args:
-            username (str): The username of the newly created user.
+        """
+        Logs a successful registration event. Log level: INFO.
         """
         self._logger.info(f"New user {username} has been created.")
 
     def backstage(self, username: str, panel: str) -> None:
-        """Logs a user switching to a different panel.
-
-        Args:
-            username (str): The username of the user.
-            panel (str): The name of the panel the user switched to.
+        """
+        Logs a user switching to a different panel. Log level: DEBUG.
         """
         self._logger.debug(f"User {username} switched to {panel} panel.")
 
     def pagination(self, panel: str, num: int) -> None:
-        """Logs pagination events.
-
-        Args:
-            panel (str): The name of the panel being paginated.
-            num (int): Number of records shown.
+        """
+        Logs pagination events. Log level: DEBUG.
         """
         self._logger.debug(f"Showing {num} records at {panel} panel.")
 

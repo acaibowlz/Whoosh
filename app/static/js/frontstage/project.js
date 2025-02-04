@@ -1,4 +1,4 @@
-// Function to set carousel image height
+// The function to set carousel image height
 function setCarouselImageHeight() {
   const carousel = document.getElementById("carousel");
   const images = carousel.querySelectorAll(".carousel-item img");
@@ -14,7 +14,14 @@ function setCarouselImageHeight() {
   });
 }
 
-// Function to initialize the carousel image height setting
+// The function to send the read count request
+function sendReadCountRequest(projectUid) {
+  fetch(`/readcount-increment?content=project&project_uid=${projectUid}`).catch(
+    (error) => console.error(`Error incrementing read count: ${error}`),
+  );
+}
+
+// The function to initialize the carousel image height setting
 function initializeCarouselImageHeight() {
   // Set the height when the page loads
   setCarouselImageHeight();
@@ -29,4 +36,7 @@ hljs.highlightAll();
 // Attach all event listeners and initializations inside DOMContentLoaded
 document.addEventListener("DOMContentLoaded", function () {
   initializeCarouselImageHeight();
+
+  const projectUid = document.getElementById("project-uid").dataset.projectUid;
+  setTimeout(() => sendReadCountRequest(projectUid), 30000);
 });

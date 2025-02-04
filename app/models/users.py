@@ -8,10 +8,10 @@ from flask_login import UserMixin
 
 
 def select_profile_img() -> str:
-    """Selects a random profile image URL.
+    """
+    Returns a random profile image url.
 
-    Returns:
-        str: URL to the selected profile image.
+    Available options: img/profile{0-4}.png
     """
     idx = random.choice(range(5))
     return url_for("static", filename=f"img/profile{idx}.png")
@@ -19,21 +19,24 @@ def select_profile_img() -> str:
 
 @dataclass
 class UserInfo(UserMixin):
-    """Class to represent user information.
+    """
+    This `UserInfo` inherits from `UserMixin` and is used in the `user_loader()` callback function for `flask_login`.
 
-    Attributes:
-        username (str): Username of the user.
-        email (str): Email address of the user.
-        blogname (str): Blog name of the user.
-        profile_img_url (str): URL to the user's profile image. Defaults to an empty string.
-        cover_url (str): URL to the user's cover image. Defaults to an empty string.
-        created_at (datetime): Timestamp when the user was created. Defaults to the current UTC time if None.
-        short_bio (str): Short biography of the user. Defaults to an empty string.
-        social_links (list[Tuple[str, str]]): list of social media links as tuples (name, URL). Defaults to five empty tuples.
-        changelog_enabled (bool): Flag indicating if the changelog feature is enabled. Defaults to False.
-        gallery_enabled (bool): Flag indicating if the gallery feature is enabled. Defaults to False.
-        total_views (int): Total number of views. Defaults to 0.
-        tags (dict[str, int]): Dictionary of tags and their associated counts. Defaults to an empty dictionary.
+    Data required to create a new `UserInfo`:
+    - `username`
+    - `email`
+    - `blogname`
+
+    Fields that are automatically generated:
+    - `profile_img_url`
+    - `cover_url`
+    - `created_at`
+    - `short_bio`
+    - `social_links`
+    - `gallery_enabled`
+    - `changelog_enabled`
+    - `total_views`
+    - `tags`
     """
 
     username: str
@@ -44,8 +47,8 @@ class UserInfo(UserMixin):
     created_at: Optional[datetime] = None
     short_bio: str = ""
     social_links: list[Tuple[str, str]] = None
-    changelog_enabled: bool = False
     gallery_enabled: bool = False
+    changelog_enabled: bool = False
     total_views: int = 0
     tags: dict[str, int] = field(default_factory=dict)
 
@@ -70,12 +73,11 @@ class UserInfo(UserMixin):
 
 @dataclass
 class UserCreds:
-    """Class to represent user credentials.
-
-    Attributes:
-        username (str): Username of the user.
-        email (str): Email address of the user.
-        password (str): Password for the user account.
+    """
+    Data required to create a new `UserCreds`:
+    - `username`
+    - `email`
+    - `password` -> should be hashed using `_hash_password()` in `create_user()`
     """
 
     username: str
@@ -85,11 +87,10 @@ class UserCreds:
 
 @dataclass
 class UserAbout:
-    """Class to represent additional information about a user.
-
-    Attributes:
-        username (str): Username of the user.
-        about (str): Additional information or bio about the user. Defaults to an empty string.
+    """
+    Data required to create a new `UserAbout`:
+    - `username`
+    - `about`
     """
 
     username: str

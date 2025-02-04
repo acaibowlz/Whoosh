@@ -46,9 +46,7 @@
               {% for post in posts %}
                 <tr>
                   <td class="align-middle">
-                    <!-- leave post stat for future -->
-                    <!-- <a href="stats/posts/{{ post.post_uid }}" class="me-1" style="color: black">{{ post.title }}</a> -->
-                    <a href="{{ url_for('frontstage.blogpost', username=post.author, post_uid=post.post_uid) }}"
+                    <a href="{{ url_for('frontstage.blogpost_no_slug', username=post.author, post_uid=post.post_uid) }}"
                        class="text-black">{{ post.title }}</a>
                     {% if post.featured %}<span class="badge rounded-pill bg-success">Featured</span>{% endif %}
                   </td>
@@ -121,7 +119,7 @@
         <div class="card-body">
           <div class="row">
             <div class="col-10">
-              <a href="{{ url_for('frontstage.blogpost', username=post.author, post_uid=post.post_uid) }}"
+              <a href="{{ url_for('frontstage.blogpost_no_slug', username=post.author, post_uid=post.post_uid) }}"
                  class="text-black text-truncate">{{ post.title }}</a>
               <p class="text-grey mb-2 backstage-mobile-time">
                 Created at <span class="utc-to-local-long">{{ post.created_at }}</span>

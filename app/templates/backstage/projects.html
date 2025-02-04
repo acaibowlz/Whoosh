@@ -43,7 +43,7 @@
               {% for project in projects %}
                 <tr>
                   <td>
-                    <a href="{{ url_for('frontstage.project', username=project.author, project_uid=project.project_uid) }}"
+                    <a href="{{ url_for('frontstage.project_no_slug', username=project.author, project_uid=project.project_uid) }}"
                        class="text-black">{{ project.title }}</a>
                   </td>
                   <td>
@@ -101,7 +101,7 @@
         <div class="card-body">
           <div class="row">
             <div class="col-10">
-              <a href="{{ url_for('frontstage.project', username=user.username, project_uid=project.project_uid) }}"
+              <a href="{{ url_for('frontstage.project_no_slug', username=user.username, project_uid=project.project_uid) }}"
                  class="text-black text-truncate">{{ project.title }}</a>
               <p class="text-grey mb-2" class="backstage-mobile-time">
                 Created at <span class="utc-to-local-long">{{ project.created_at }}</span>
@@ -188,7 +188,9 @@
             </div>
             <div class="mb-4">
               <label class="form-label ms-2 fst-italic text-black">· Images</label>
-              <div class="ms-2 my-2 text-grey fw-light">We recommend using 16:9 images, as they will be automatically cropped.</div>
+              <div class="ms-2 my-2 text-grey fw-light">
+                We recommend using 16:9 images, as they will be cropped and centered automatically.
+              </div>
               <div id="image-container">
                 <div class="input-group mb-2">
                   <span class="input-group-text">Image</span>

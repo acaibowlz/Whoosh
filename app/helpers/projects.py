@@ -47,8 +47,8 @@ class NewProjectSetup:
             title=form.title.data,
             short_description=form.desc.data,
             tags=process_tags(form.tags.data),
-            custom_slug=form.custom_slug.data,
             images=process_form_images(form),
+            custom_slug=form.custom_slug.data,
         )
         return asdict(new_project_info)
 
@@ -112,8 +112,8 @@ class ProjectUpdateSetup:
             "title": form.title.data,
             "short_description": form.desc.data,
             "tags": process_tags(form.tags.data),
-            "images": process_form_images(form),
             "custom_slug": form.custom_slug.data,
+            "images": process_form_images(form),
             "last_updated": datetime.now(timezone.utc),
         }
         updated_project_content = {"content": form.editor.data}

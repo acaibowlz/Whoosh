@@ -29,6 +29,7 @@
 {% endblock %}
 {% block body %}
   {% include 'frontstage/navbar.html' %}
+  <div id="project-uid" data-project-uid="{{ project.project_uid }}" hidden></div>
   <div class="container-fluid">
     <div class="row">
       <div class="col-lg-6 col-11 mx-auto mb-5">
@@ -41,6 +42,7 @@
           <a class="text-grey"
              href="{{ url_for('frontstage.about', username=project.author) }}">{{ project.author }}</a>
         </div>
+        <!-- carousel -->
         <div id="carousel" class="carousel slide">
           <div class="carousel-inner" id="carousel">
             <div class="carousel-item active w-100 rounded-2">
@@ -111,6 +113,7 @@
             <span class="visually-hidden">Next</span>
           </button>
         </div>
+        <!-- content -->
         <div class="my-3">{{ project.content|safe }}</div>
         <div class="d-flex align-items-center mb-5 text-dark-grey fs-large flex-wrap">
           <span><i class="fa-solid fa-tags"></i></span>
