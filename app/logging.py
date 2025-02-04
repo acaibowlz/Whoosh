@@ -29,7 +29,7 @@ def _setup_prod_logger() -> logging.Logger:
     Sets up the production logger. Returns a logger instance.
 
     """
-    logger = logger.getLogger("Whoosh")
+    logger = logger.getLogger("app")
     logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(fmt="[%(asctime)s] %(levelname)s: %(message)s")
@@ -52,7 +52,7 @@ def _setup_dev_logger() -> logging.Logger:
         fmt="[%(asctime)s] %(levelname)s in %(funcName)s, %(module)s: %(message)s"
     )
 
-    logger = logging.getLogger("Whoosh")
+    logger = logging.getLogger("app")
     logger.setLevel(logging.DEBUG)
 
     stream_handler = logging.StreamHandler()
@@ -60,7 +60,7 @@ def _setup_dev_logger() -> logging.Logger:
     stream_handler.setLevel(logging.DEBUG)
     logger.addHandler(stream_handler)
 
-    file_handler = logging.FileHandler("Whoosh.log", "w", "utf-8")
+    file_handler = logging.FileHandler("app.log", "w", "utf-8")
     file_handler.setFormatter(file_formatter)
     file_handler.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
