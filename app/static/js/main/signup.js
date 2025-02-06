@@ -30,7 +30,7 @@ function isUniqueEmail(email) {
 
 function isUniqueUsername(username) {
   const baseUrl = window.location.origin;
-  const url = `${baseUrl}/is-unique`; // Replace with your actual endpoint URL
+  const url = `${baseUrl}/is-unique`;
   const params = new URLSearchParams({ username: username });
 
   return fetch(`${url}?${params}`, {

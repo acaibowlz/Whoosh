@@ -134,17 +134,21 @@ class LoggerUtils:
         """
         self._logger.info(f"New user {username} has been created.")
 
-    def backstage(self, username: str, panel: str) -> None:
-        """
-        Logs a user switching to a different panel. Log level: DEBUG.
-        """
-        self._logger.debug(f"User {username} switched to {panel} panel.")
-
-    def pagination(self, panel: str, num: int) -> None:
+    def pagination(self, request: Request, page: int, count: int) -> None:
         """
         Logs pagination events. Log level: DEBUG.
         """
-        self._logger.debug(f"Showing {num} records at {panel} panel.")
+        if "posts" in request.url:
+            panel = "posts"
+        elif "projects" in request.url:
+            panel = "projects"
+        elif "archive" in request.url:
+            panel = "archive"
+        elif "changelog" in request.url:
+            panel = "changelog"
+        else:
+            raise Exception("Unknown pagination option in logger_utils.pagination.")
+        self._logger.debug(f"Showing {count} records at page {page} of {panel} panel.")
 
 
 logger = Logger(env=ENV)

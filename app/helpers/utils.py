@@ -245,12 +245,7 @@ class Paging:
     """
     A class to handle pagination for the user's posts, projects, and changelogs.
 
-    Use `setup` method to set up the pagination. Then, use the properties to check if the previous and next pages are allowed.
-
-    Properties available after setting up the pagination instance:
-    - `is_previous_page_allowed`
-    - `is_next_page_allowed`
-    - `current_page`
+    Use `setup()` method to set up the pagination, then pass the instance to the template to decide if the prev/next button is allowed.
     """
 
     def __init__(self, db_handler: Database) -> None:
@@ -260,46 +255,47 @@ class Paging:
         self._allow_next_page = None
         self._current_page = None
 
-    def setup(self, username: str, database: str, current_page: int, num_per_page: int) -> Self:
+    def setup(self, username: str, content: str, current_page: int, num_per_page: int) -> Self:
         """
-        Setting up the pagination requires the username, the database to query, the current page number, and the number of entries per page.
+        Setting up the pagination for the corresponding content.
+        Possible content options: "post", "project", and "changelog".
 
-        Returns:
-            Paging: The paging instance
+        This method will directly show a 404 error if the current page is not a legal page number (i.e., too large or too small).
+
+        Otherwise, it gives two properties `is_previous_page_allowed` and `is_next_page_allowed` for templates to decide if the prev/next button is allowed.
         """
         self._has_setup = True
-        self._database = database
         self._allow_previous_page = False
         self._allow_next_page = False
         self._current_page = current_page
 
         # set up for pagination
         # factory mode
-        if self._database == "post_info":
-            num_not_archived = self._db_handler.post_info.count_documents(
+        if content == "post":
+            not_archived_count = self._db_handler.post_info.count_documents(
                 {"author": username, "archived": False}
             )
-        elif self._database == "project_info":
-            num_not_archived = self._db_handler.project_info.count_documents(
+        elif content == "project":
+            not_archived_count = self._db_handler.project_info.count_documents(
                 {"author": username, "archived": False}
             )
-        elif self._database == "changelog":
-            num_not_archived = self._db_handler.changelog.count_documents(
+        elif content == "changelog":
+            not_archived_count = self._db_handler.changelog.count_documents(
                 {"author": username, "archived": False}
             )
         else:
-            raise Exception("Unknown database option for paging class.")
+            raise Exception("Unknown content option for paging class.")
 
-        if num_not_archived == 0:
+        if not_archived_count == 0:
             max_page = 1
         else:
-            max_page = ceil(num_not_archived / num_per_page)
+            max_page = ceil(not_archived_count / num_per_page)
 
         if current_page > max_page or current_page < 1:
             # not a legal page number
             abort(404)
 
-        if current_page * num_per_page < num_not_archived:
+        if current_page * num_per_page < not_archived_count:
             self._allow_next_page = True
 
         if current_page > 1:

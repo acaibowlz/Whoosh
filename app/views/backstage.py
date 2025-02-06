@@ -41,11 +41,8 @@ backstage = Blueprint("backstage", __name__, template_folder=TEMPLATE_FOLDER)
 @backstage.route("/", methods=["GET"])
 @login_required
 def root() -> Response:
-    """Redirects to the posts panel.
-
-    Returns:
-        Response: URL to the posts panel.
-
+    """
+    The root of the backstage section. Redirects to the posts panel.
     """
     return redirect(url_for("backstage.posts_panel"))
 
@@ -53,18 +50,13 @@ def root() -> Response:
 @backstage.route("/posts", methods=["GET", "POST"])
 @login_required
 def posts_panel() -> str:
-    """Handles the posts panel view and post creation.
-
-    Manages the display of posts and allows for the creation of new posts.
-    It includes pagination for posts and error handling for form submissions.
-
-    Returns:
-        str: Rendered template of the posts panel with context.
-
     """
-    session["last_visited"] = request.base_url
-    logger_utils.backstage(username=current_user.username, panel="posts")
+    Displays the posts panel view and handles the post creation with a modal.
+    Associated with `NewPostForm` for post creation.
+    """
+    POSTS_EACH_PAGE = 20
 
+    session["last_visited"] = request.base_url
     current_page = request.args.get("page", default=1, type=int)
 
     with mongo_connection() as mongodb:
@@ -77,9 +69,8 @@ def posts_panel() -> str:
                 flash("New post published successfully!", category="success")
         flashing_if_errors(form.errors)
 
-        POSTS_EACH_PAGE = 20
         paging = Paging(db_handler=mongodb)
-        pagination = paging.setup(current_user.username, "post_info", current_page, POSTS_EACH_PAGE)
+        pagination = paging.setup(current_user.username, "post", current_page, POSTS_EACH_PAGE)
         post_utils = PostUtils(mongodb)
         posts = post_utils.get_post_infos_with_pagination(
             username=current_user.username,
@@ -90,7 +81,7 @@ def posts_panel() -> str:
             post["title"] = slicing_title(post.get("title"), 25)
             post["comments"] = mongodb.comment.count_documents({"post_uid": post.get("post_uid")})
 
-    logger_utils.pagination(panel="posts", num=len(posts))
+    logger_utils.pagination(request, current_page, len(posts))
 
     return render_template(
         "backstage/posts.html", user=user, posts=posts, pagination=pagination, form=form
@@ -100,23 +91,17 @@ def posts_panel() -> str:
 @backstage.route("/projects", methods=["GET", "POST"])
 @login_required
 def projects_panel() -> str:
-    """Handles the projects panel view and project creation.
-
-    Manages the display of projects and allows for the creation of new projects.
-    It includes pagination for projects and error handling for form submissions.
-
-    Returns:
-        str: Rendered template of the projects panel with context.
-
     """
-    session["last_visited"] = request.base_url
-    logger_utils.backstage(username=current_user.username, panel="projects")
+    Displays the projects panel view and handles the project creation with a modal.
+    Associated with `NewProjectForm` for project creation.
+    """
+    PROJECTS_PER_PAGE = 10
 
+    session["last_visited"] = request.base_url
     current_page = request.args.get("page", default=1, type=int)
-    form = NewProjectForm()
 
     with mongo_connection() as mongodb:
-
+        form = NewProjectForm()
         if form.validate_on_submit():
             project_uid = create_project(form, mongodb)
             if project_uid is not None:
@@ -124,18 +109,17 @@ def projects_panel() -> str:
                 flash("New project published successfully!", category="success")
         flashing_if_errors(form.errors)
         user = mongodb.user_info.find_one({"username": current_user.username})
-        PROJECTS_PER_PAGE = 10
         projects_utils = ProjectsUtils(mongodb)
         projects = projects_utils.get_project_infos_with_pagination(
             current_user.username, current_page, PROJECTS_PER_PAGE
         )
         paging = Paging(mongodb)
-        paging.setup(current_user.username, "project_info", current_page, PROJECTS_PER_PAGE)
+        paging.setup(current_user.username, "project", current_page, PROJECTS_PER_PAGE)
 
     for project in projects:
         project["title"] = slicing_title(project.get("title"), 40)
 
-    logger_utils.pagination(panel="projects", num=len(projects))
+    logger_utils.pagination(request, current_page, len(projects))
 
     return render_template(
         "backstage/projects.html", user=user, projects=projects, pagination=paging, form=form
@@ -145,18 +129,10 @@ def projects_panel() -> str:
 @backstage.route("/archive", methods=["GET"])
 @login_required
 def archive_panel() -> str:
-    """Displays the archived posts and projects for the user.
-
-    Retrieves and formats archived posts and projects for the current user, including
-    formatting view counts and comment counts. It then renders the archive page with
-    this information.
-
-    Returns:
-        str: Rendered template of the archive panel with context.
-
+    """
+    Displays the archive panel view, which shows the archived posts, projects, and changelogs.
     """
     session["last_visited"] = request.base_url
-    logger_utils.backstage(username=current_user.username, panel="archive")
 
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": current_user.username})
@@ -170,7 +146,7 @@ def archive_panel() -> str:
         changelog_utils = ChangelogUtils(mongodb)
         changelogs = changelog_utils.get_archived_changelogs(current_user.username)
 
-    logger_utils.pagination(panel="archive", num=(len(posts) + len(projects)))
+    logger_utils.pagination(request, 1, len(posts) + len(projects))
 
     return render_template(
         "backstage/archive.html", user=user, posts=posts, projects=projects, changelogs=changelogs
@@ -180,23 +156,16 @@ def archive_panel() -> str:
 @backstage.route("/changelog", methods=["GET", "POST"])
 @login_required
 def changelog_panel() -> str:
-    """Render the changelog panel for the backstage section.
-
-    This route handles both GET and POST requests. It displays the changelog panel,
-    processes the submission of a new changelog if present, and handles pagination
-    for viewing changelogs.
-
-    Returns:
-        str: The rendered HTML template for the changelog panel.
-
     """
-    session["last_visited"] = request.base_url
-    logger_utils.backstage(username=current_user.username, panel="changelog")
+    Displays the changelog panel view and handles the changelog creation with a modal.
+    Associated with `NewChangelogForm` for changelog creation.
+    """
+    CHANGELOGS_PER_PAGE = 10
 
+    session["last_visited"] = request.base_url
     current_page = request.args.get("page", default=1, type=int)
 
     with mongo_connection() as mongodb:
-        user = mongodb.user_info.find_one({"username": current_user.username})
         form = NewChangelogForm()
         if form.validate_on_submit():
             changelog_uid = create_changelog(form, mongodb)
@@ -206,7 +175,6 @@ def changelog_panel() -> str:
         flashing_if_errors(form.errors)
 
         user = mongodb.user_info.find_one({"username": current_user.username})
-        CHANGELOGS_PER_PAGE = 10
         changelog_utils = ChangelogUtils(mongodb)
         changelogs = changelog_utils.get_changelogs_with_pagination(
             current_user.username, current_page, CHANGELOGS_PER_PAGE
@@ -217,7 +185,7 @@ def changelog_panel() -> str:
     for changelog in changelogs:
         changelog["title"] = slicing_title(changelog.get("title"), 40)
 
-    logger_utils.pagination(panel="changelog", num=len(changelogs))
+    logger_utils.pagination(request, current_page, len(changelogs))
 
     return render_template(
         "backstage/changelog.html", user=user, form=form, pagination=paging, changelogs=changelogs
@@ -227,16 +195,10 @@ def changelog_panel() -> str:
 @backstage.route("/theme", methods=["GET", "POST"])
 @login_required
 def theme_panel() -> str:
-    """Displays the theme settings panel for the user.
-
-    Retrieves user information and renders the theme settings page.
-
-    Returns:
-        str: Rendered template of the theme settings panel with context.
-
+    """
+    Displays the theme panel for the user.
     """
     session["last_visited"] = request.base_url
-    logger_utils.backstage(username=current_user.username, panel="theme")
 
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": current_user.username})
@@ -247,17 +209,16 @@ def theme_panel() -> str:
 @backstage.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings_panel() -> str:
-    """Handles the user settings panel, including general settings, social links, password update, and account deletion.
+    """
+    Handles the user settings panel, including four sections:
+    - General settings
+    - Social links
+    - Password update
+    - Account deletion
 
-    Manages form submissions for updating general settings, social links, password changes, and account deletion.
-    Validates form inputs and updates the user information accordingly. Provides feedback on success or failure.
-
-    Returns:
-        str: Rendered template of the settings panel with context.
-
+    Each section is associated with a form for updating the user information.
     """
     session["last_visited"] = request.base_url
-    logger_utils.backstage(username=current_user.username, panel="settings")
 
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": current_user.username})
@@ -383,56 +344,12 @@ def settings_panel() -> str:
     )
 
 
-@backstage.route("/edit/post/<post_uid>", methods=["GET", "POST"])
-@login_required
-def edit_post(post_uid: str) -> str:
-    """Handles the editing of a specific post.
-
-    Allows users to update the details of a post. On successful update, flashes a success message and redirects
-    to the posts panel. Handles form validation errors and updates post information in the database.
-
-    Args:
-        post_uid (str): Unique identifier of the post to be edited.
-
-    Returns:
-        str: Rendered template of the edit post page or redirects to the posts panel on POST requests.
-    """
-    logger_utils.backstage(username=current_user.username, panel="edit_post")
-
-    form = EditPostForm()
-
-    with mongo_connection() as mongodb:
-        if form.validate_on_submit():
-            update_post(post_uid, form, mongodb)
-            logger.debug(f"Post {post_uid} is updated.")
-            title = mongodb.post_info.find_one({"post_uid": post_uid}).get("title")
-            title_sliced = slicing_title(title, max_len=20)
-            flash(f'Your post "{title_sliced}" has been updated!', category="success")
-        flashing_if_errors(form.errors)
-
-        user = mongodb.user_info.find_one({"username": current_user.username})
-        post_utils = PostUtils(mongodb)
-        post = post_utils.get_full_post(post_uid)
-        post["tags"] = ", ".join(post.get("tags"))
-
-    if request.method == "POST":
-        return redirect(url_for("backstage.posts_panel"))
-    return render_template("backstage/edit-post.html", post=post, user=user, form=form)
-
-
 @backstage.route("/about", methods=["GET", "POST"])
 @login_required
 def about_panel() -> str:
-    """Handles the editing of the user's 'About' section.
-
-    Allows users to update their personal information and 'About' section. On successful update, flashes a success
-    message and updates the user cache. Handles form validation errors and updates user information in the database.
-
-    Returns:
-        str: Rendered template of the edit about page.
     """
-    logger_utils.backstage(username=current_user.username, panel="about")
-
+    The panel to edit user about, which includes the user profile image, short bio, and about section.
+    """
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": current_user.username})
         about = mongodb.user_about.find_one({"username": current_user.username}).get("about")
@@ -465,21 +382,41 @@ def about_panel() -> str:
     return redirect(url_for("frontstage.about", username=current_user.username))
 
 
+@backstage.route("/edit/post/<post_uid>", methods=["GET", "POST"])
+@login_required
+def edit_post(post_uid: str) -> str:
+    """
+    Handles the editing of a specific post. Uses `update_post()` to update the post information.
+    """
+    session["last_visited"] = request.base_url
+
+    with mongo_connection() as mongodb:
+        form = EditPostForm()
+        if form.validate_on_submit():
+            update_post(post_uid, form, mongodb)
+            logger.debug(f"Post {post_uid} is updated.")
+            title = mongodb.post_info.find_one({"post_uid": post_uid}).get("title")
+            title_sliced = slicing_title(title, max_len=20)
+            flash(f'Your post "{title_sliced}" has been updated!', category="success")
+        flashing_if_errors(form.errors)
+
+        user = mongodb.user_info.find_one({"username": current_user.username})
+        post_utils = PostUtils(mongodb)
+        post = post_utils.get_full_post(post_uid)
+        post["tags"] = ", ".join(post.get("tags"))
+
+    if request.method == "POST":
+        return redirect(url_for("backstage.posts_panel"))
+    return render_template("backstage/edit-post.html", post=post, user=user, form=form)
+
+
 @backstage.route("/edit/project/<project_uid>", methods=["GET", "POST"])
 @login_required
 def edit_project(project_uid: str) -> str:
-    """Handles the editing of a specific project.
-
-    Allows users to update the details of a project. On successful update, flashes a success message and redirects
-    to the projects panel. Handles form validation errors and updates project information in the database.
-
-    Args:
-        project_uid (str): Unique identifier of the project to be edited.
-
-    Returns:
-        str: Rendered template of the edit project page or redirects to the projects panel on POST requests.
     """
-    logger_utils.backstage(username=current_user.username, panel="edit_project")
+    Handles the editing of a specific project. Uses `update_project()` to update the project information.
+    """
+    session["last_visited"] = request.base_url
 
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": current_user.username})
@@ -508,15 +445,10 @@ def edit_project(project_uid: str) -> str:
 @backstage.route("/edit/changelog/<changelog_uid>", methods=["GET", "POST"])
 @login_required
 def edit_changelog(changelog_uid: str) -> str:
-    """_summary_
-
-    Args:
-        changelog_uid (str): _description_
-
-    Returns:
-        str: _description_
     """
-    logger_utils.backstage(username=current_user.username, panel="edit_changelog")
+    Handles the editing of a specific changelog. Uses `update_changelog()` to update the changelog information
+    """
+    session["last_visited"] = request.base_url
 
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": current_user.username})
@@ -553,6 +485,7 @@ def toggle_featured() -> Response:
     When the action is done, it returns to the same panel where the action was triggered.
     """
     post_uid = request.args.get("uid")
+
     with mongo_connection() as mongodb:
         post_info = mongodb.post_info.find_one({"post_uid": post_uid})
         truncated_post_title = slicing_title(post_info.get("title"), max_len=20)
@@ -589,6 +522,7 @@ def toggle_archived() -> Response:
     When the action is done, it returns to the same panel where the action was triggered.
     """
     content = request.args.get("content")
+
     with mongo_connection() as mongodb:
         if content == "post":
             post_uid = request.args.get("uid")
@@ -685,6 +619,7 @@ def delete_post() -> Response:
     Deletes a post. Redirects to the archive panel page when it's done.
     """
     post_uid = request.args.get("uid")
+
     with mongo_connection() as mongodb:
         post_info = mongodb.post_info.find_one({"post_uid": post_uid})
         title_sliced = slicing_title(post_info.get("title"), max_len=20)
@@ -703,6 +638,7 @@ def delete_project() -> Response:
     Deletes a project. Redirects to the archive panel page when it's done.
     """
     project_uid = request.args.get("uid")
+
     with mongo_connection() as mongodb:
         project_info = mongodb.project_info.find_one({"project_uid": project_uid})
         title_sliced = slicing_title(project_info.get("title"), max_len=20)
@@ -721,6 +657,7 @@ def delete_changelog() -> Response:
     Deletes a changelog. Redirects to the archive panel page when it's done.
     """
     changelog_uid = request.args.get("uid")
+
     with mongo_connection() as mongodb:
         changelog = mongodb.changelog.find_one({"changelog_uid": changelog_uid})
         title_sliced = slicing_title(changelog.get("title"), max_len=20)
@@ -731,24 +668,12 @@ def delete_changelog() -> Response:
     return redirect(url_for("backstage.archive_panel"))
 
 
-@backstage.route("/logout", methods=["GET"])
-@login_required
-def logout() -> Response:
-    """
-    Logs out the user and redirects to the home page.
-    """
-    username = current_user.username
-    logout_user()
-    logger_utils.logout(request=request, username=username)
-    session.clear()
-
-    return redirect(url_for("frontstage.home", username=username))
-
-
 @backstage.route("/export", methods=["GET"])
 @login_required
 def export_data():
-
+    """
+    Exports user data in JSON format, then serves it as a downloadable file.
+    """
     result = {}
 
     with mongo_connection() as mongodb:

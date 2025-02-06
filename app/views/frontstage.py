@@ -40,7 +40,7 @@ frontstage = Blueprint("frontstage", __name__, template_folder=TEMPLATE_FOLDER)
 @frontstage.route("/@<username>", methods=["GET"])
 def home(username: str) -> str:
     """
-    The main page for a given user. Shows the featured blog posts.
+    The home page for a given user. Shows the featured blog posts.
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
@@ -62,14 +62,12 @@ def home(username: str) -> str:
 
 @frontstage.route("/@<username>/blog", methods=["GET"])
 def blog(username: str) -> str:
-    """Render the blog page for a given user with pagination.
-
-    Args:
-        username (str): The username of the user whose blog page is to be rendered.
-
-    Returns:
-        str: Rendered HTML of the blog page.
     """
+    The blog page for a given user.
+    Shows blog posts in lists and tags with counts.
+    """
+    POSTS_EACH_PAGE = 5
+
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
 
@@ -79,9 +77,8 @@ def blog(username: str) -> str:
             abort(404)
 
         current_page = request.args.get("page", default=1, type=int)
-        POSTS_EACH_PAGE = 5
         paging = Paging(mongodb)
-        pagination = paging.setup(username, "post_info", current_page, POSTS_EACH_PAGE)
+        pagination = paging.setup(username, "post", current_page, POSTS_EACH_PAGE)
 
         post_utils = PostUtils(mongodb)
         posts = post_utils.get_post_infos_with_pagination(
@@ -100,15 +97,9 @@ def blog(username: str) -> str:
 
 
 def blogpost(username: str, post_uid: str, request: Request) -> str:
-    """Handle the main actions for rendering a blog post.
-
-    Args:
-        username (str): The username of the post author.
-        post_uid (str): The unique identifier of the post.
-        request (Request): The Flask request object.
-
-    Returns:
-        str: Rendered HTML of the blog post page.
+    """
+    The destination for `blogpost_no_slug()` and `blogpost_with_slug()`.
+    Renders a blog post and its comments.
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
@@ -141,14 +132,9 @@ def blogpost(username: str, post_uid: str, request: Request) -> str:
 
 @frontstage.route("/@<username>/posts/<post_uid>", methods=["GET", "POST"])
 def blogpost_no_slug(username: str, post_uid: str) -> str:
-    """Render a blog post page, optionally redirecting if a slug is present.
-
-    Args:
-        username (str): The username of the post author.
-        post_uid (str): The unique identifier of the post.
-
-    Returns:
-        str: Rendered HTML of the blog post page or redirect to the slugged URL.
+    """
+    Handles blog post by post UID.
+    If a slug is defined for the post, redirects to the URL with slug by `blogpost_with_slug()`.
     """
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
@@ -178,15 +164,8 @@ def blogpost_no_slug(username: str, post_uid: str) -> str:
 
 @frontstage.route("/@<username>/posts/<post_uid>/<slug>", methods=["GET", "POST"])
 def blogpost_with_slug(username: str, post_uid: str, slug: str) -> str:
-    """Render a blog post page with a slug, or redirect if the slug does not match.
-
-    Args:
-        username (str): The username of the post author.
-        post_uid (str): The unique identifier of the post.
-        slug (str): The slug of the post.
-
-    Returns:
-        str: Rendered HTML of the blog post page or redirect to the correct slug URL.
+    """
+    Handles blog post with a slug. If an incorrect slug is provided, redirects to the correct URL.
     """
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
@@ -216,13 +195,8 @@ def blogpost_with_slug(username: str, post_uid: str, slug: str) -> str:
 
 @frontstage.route("/@<username>/tags", methods=["GET"])
 def tag(username: str) -> str:
-    """Render a page showing posts and projects with a specified tag.
-
-    Args:
-        username (str): The username of the user whose posts and projects are to be displayed.
-
-    Returns:
-        str: Rendered HTML of the tag page.
+    """
+    The page for showing a query result by tag. Includes posts and projects.
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
@@ -261,13 +235,8 @@ def tag(username: str) -> str:
 
 @frontstage.route("/@<username>/gallery", methods=["GET"])
 def gallery(username: str) -> str:
-    """Render the gallery page for a given user.
-
-    Args:
-        username (str): The username of the user whose gallery is to be rendered.
-
-    Returns:
-        str: Rendered HTML of the gallery page.
+    """
+    The gallery page for a given user. Shows projects in grids.
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
@@ -304,15 +273,9 @@ def gallery(username: str) -> str:
 
 
 def project(username: str, project_uid: str, request: Request) -> str:
-    """Handle the main actions for rendering a project page.
-
-    Args:
-        username (str): The username of the project author.
-        project_uid (str): The unique identifier of the project.
-        request (Request): The Flask request object.
-
-    Returns:
-        str: Rendered HTML of the project page.
+    """
+    The destination for `project_no_slug()` and `project_with_slug()`.
+    Renders the content of a project.
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
@@ -332,14 +295,9 @@ def project(username: str, project_uid: str, request: Request) -> str:
 
 @frontstage.route("/@<username>/project/<project_uid>", methods=["GET"])
 def project_no_slug(username: str, project_uid: str) -> str:
-    """Render a project page, optionally redirecting if a slug is present.
-
-    Args:
-        username (str): The username of the project author.
-        project_uid (str): The unique identifier of the project.
-
-    Returns:
-        str: Rendered HTML of the project page or redirect to the slugged URL.
+    """
+    Handles project by project UID.
+    If a slug is defined for the project, redirects to the URL with slug by `project_with_slug()`.
     """
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
@@ -369,15 +327,8 @@ def project_no_slug(username: str, project_uid: str) -> str:
 
 @frontstage.route("/@<username>/project/<project_uid>/<slug>", methods=["GET"])
 def project_with_slug(username: str, project_uid: str, slug: str) -> str:
-    """Render a project page with a slug, or redirect if the slug does not match.
-
-    Args:
-        username (str): The username of the project author.
-        project_uid (str): The unique identifier of the project.
-        slug (str): The slug of the project.
-
-    Returns:
-        str: Rendered HTML of the project page or redirect to the correct slug URL.
+    """
+    Handles project with a slug. If an incorrect slug is provided, redirects to the correct URL.
     """
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
@@ -407,13 +358,8 @@ def project_with_slug(username: str, project_uid: str, slug: str) -> str:
 
 @frontstage.route("/@<username>/changelog", methods=["GET"])
 def changelog(username: str) -> str:
-    """Render the changelog page for a given user.
-
-    Args:
-        username (str): The username of the user whose changelog is to be rendered.
-
-    Returns:
-        str: Rendered HTML of the changelog page.
+    """
+    The changelog page for a given user. Shows changelogs in a timeline.
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
@@ -438,13 +384,8 @@ def changelog(username: str) -> str:
 
 @frontstage.route("/@<username>/about", methods=["GET"])
 def about(username: str) -> str:
-    """Render the about page for a given user.
-
-    Args:
-        username (str): The username of the user whose about page is to be rendered.
-
-    Returns:
-        str: Rendered HTML of the about page.
+    """
+    The about page for a given user.
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
@@ -466,13 +407,8 @@ def about(username: str) -> str:
 
 @frontstage.route("/@<username>/get-profile-img", methods=["GET"])
 def get_profile_img(username: str) -> str:
-    """Get the profile image URL of a user.
-
-    Args:
-        username (str): The username of the user.
-
-    Returns:
-        str: JSON response containing the profile image URL.
+    """
+    Get the profile image URL of a user. Sends a JSON response with key `imageUrl`.
     """
     with mongo_connection() as mongodb:
         user_utils = UserUtils(mongodb)
@@ -482,10 +418,9 @@ def get_profile_img(username: str) -> str:
 
 @frontstage.route("/is-unique", methods=["GET"])
 def is_unique() -> str:
-    """Check if the email or username is unique.
-
-    Returns:
-        str: JSON response indicating if the email or username is unique.
+    """
+    Check if the email or username is unique.
+    Sends a JSON response. A single boolean value will be serialized.
     """
     email = request.args.get("email", default=None, type=str)
     username = request.args.get("username", default=None, type=str)
@@ -498,10 +433,8 @@ def is_unique() -> str:
 
 @frontstage.route("/readcount-increment", methods=["GET"])
 def readcount_increment() -> str:
-    """Increment the read count for a post.
-
-    Returns:
-        str: Confirmation message.
+    """
+    Increment the read count of a post or project by 1.
     """
     content = request.args.get("content", type=str)
 
@@ -513,6 +446,7 @@ def readcount_increment() -> str:
                 return "OK"
             post_utils = PostUtils(mongodb)
             post_utils.read_increment(author, post_uid)
+        return "OK"
 
     elif content == "project":
         project_uid = request.args.get("project_uid", type=str)
