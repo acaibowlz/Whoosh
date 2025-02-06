@@ -59,7 +59,7 @@
                        class="backstage-icon"><i class="fa-regular fa-pen-to-square"></i></a>
                   </td>
                   <td class="text-center">
-                    <a href="{{ url_for('backstage.toggle_archived', type='project', uid=project.project_uid, archived='to_true') }}"
+                    <a href="{{ url_for('backstage.toggle_archived', content='project', uid=project.project_uid, archived='to_true') }}"
                        class="backstage-icon"><i class="fa-solid fa-box-archive"></i></a>
                   </td>
                 </tr>
@@ -124,7 +124,7 @@
                   </li>
                   <li>
                     <a class="dropdown-item"
-                       href="{{ url_for('backstage.toggle_archived', type='project', uid=project.project_uid, archived='to_true') }}">Move to archive</a>
+                       href="{{ url_for('backstage.toggle_archived', content='project', uid=project.project_uid, archived='to_true') }}">Move to archive</a>
                   </li>
                 </ul>
               </div>

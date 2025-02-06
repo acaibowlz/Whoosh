@@ -27,7 +27,9 @@
     </div>
     <hr />
     {% if changelogs | length == 0 %}
-      <p class="ms-2">Now you can update yourself just like a product! Read more about <a href="https://brianlovin.com/writing/make-a-personal-changelog">personal changelog</a>.</p>
+      <p class="ms-2">
+        Now you can update yourself just like a product! Read more about <a href="https://brianlovin.com/writing/make-a-personal-changelog">personal changelog</a>.
+      </p>
     {% else %}
       <div class="col-11">
         <div class="table-responsive">
@@ -46,9 +48,7 @@
             <tbody>
               {% for changelog in changelogs %}
                 <tr>
-                  <td>
-                    {{ changelog.title }}
-                  </td>
+                  <td>{{ changelog.title }}</td>
                   <td>
                     <span class="utc-to-local-short">{{ changelog.date }}</span>
                   </td>
@@ -64,7 +64,7 @@
                        class="backstage-icon"><i class="fa-regular fa-pen-to-square"></i></a>
                   </td>
                   <td class="text-center">
-                    <a href="{{ url_for('backstage.toggle_archived', type='changelog', uid=changelog.changelog_uid, archived='to_true') }}"
+                    <a href="{{ url_for('backstage.toggle_archived', content='changelog', uid=changelog.changelog_uid, archived='to_true') }}"
                        class="backstage-icon"><i class="fa-solid fa-box-archive"></i></a>
                   </td>
                 </tr>
@@ -125,7 +125,7 @@
                   </li>
                   <li>
                     <a class="dropdown-item"
-                       href="{{ url_for('backstage.toggle_archived', type='changelog', uid=changelog.changelog_uid, archived='to_true') }}">Move to archive</a>
+                       href="{{ url_for('backstage.toggle_archived', content='changelog', uid=changelog.changelog_uid, archived='to_true') }}">Move to archive</a>
                   </li>
                 </ul>
               </div>

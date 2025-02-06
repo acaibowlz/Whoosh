@@ -14,7 +14,7 @@
     <!-- description -->
     <p class="ms-2">Archived content will not be seen in your website.</p>
     <!-- description ends -->
-    {% if posts | length == 0 and projects | length == 0  and changelogs | length == 0%}
+    {% if posts | length == 0 and projects | length == 0  and changelogs | length == 0 %}
       <p class="ms-2">You don't have any archive right now.</p>
     {% endif %}
     {% if posts | length != 0 %}
@@ -46,7 +46,7 @@
                 <td class="text-center">{{ post.comments }}</td>
                 <td class="text-center text-black">
                   <a class="backstage-icon"
-                     href="{{ url_for('backstage.toggle_archived', type='post', uid=post.post_uid, archived='to_false') }}"><i class="fa-regular fa-thumbs-up"></i></a>
+                     href="{{ url_for('backstage.toggle_archived', content='post', uid=post.post_uid, archived='to_false') }}"><i class="fa-regular fa-thumbs-up"></i></a>
                 </td>
                 <td class="text-center">
                   <a href="#"
@@ -89,7 +89,7 @@
                 <td class="text-center">/</td>
                 <td class="text-center">
                   <a class="backstage-icon"
-                     href="{{ url_for('backstage.toggle_archived', type='project', uid=project.project_uid, archived='to_false') }}">
+                     href="{{ url_for('backstage.toggle_archived', content='project', uid=project.project_uid, archived='to_false') }}">
                     <i class="fa-regular fa-thumbs-up"></i>
                   </a>
                 </td>
@@ -133,7 +133,7 @@
                 </td>
                 <td class="text-center">
                   <a class="backstage-icon"
-                     href="{{ url_for('backstage.toggle_archived', type='changelog', uid=changelog.changelog_uid, archived='to_false') }}">
+                     href="{{ url_for('backstage.toggle_archived', content='changelog', uid=changelog.changelog_uid, archived='to_false') }}">
                     <i class="fa-regular fa-thumbs-up"></i>
                   </a>
                 </td>
@@ -181,7 +181,7 @@
                 <ul class="dropdown-menu">
                   <li>
                     <a class="dropdown-item"
-                       href="{{ url_for('backstage.toggle_archived', type='post', uid=post.post_uid, archived='to_false') }}">Restore</a>
+                       href="{{ url_for('backstage.toggle_archived', content='post', uid=post.post_uid, archived='to_false') }}">Restore</a>
                   </li>
                   <li>
                     <a class="dropdown-item delete-post-btn"
@@ -221,7 +221,7 @@
                 <ul class="dropdown-menu">
                   <li>
                     <a class="dropdown-item"
-                       href="{{ url_for('backstage.toggle_archived', type='project', uid=project.project_uid, archived='to_false') }}">Restore</a>
+                       href="{{ url_for('backstage.toggle_archived', content='project', uid=project.project_uid, archived='to_false') }}">Restore</a>
                   </li>
                   <li>
                     <a class="dropdown-item delete-project-btn"
@@ -258,7 +258,7 @@
                 <ul class="dropdown-menu">
                   <li>
                     <a class="dropdown-item"
-                       href="{{ url_for('backstage.toggle_archived', type='changelog', uid=changelog.changelog_uid, archived='to_false') }}">Restore</a>
+                       href="{{ url_for('backstage.toggle_archived', content='changelog', uid=changelog.changelog_uid, archived='to_false') }}">Restore</a>
                   </li>
                   <li>
                     <a class="dropdown-item delete-changelog-btn"
