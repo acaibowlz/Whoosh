@@ -62,7 +62,7 @@ def posts_panel() -> str:
         str: Rendered template of the posts panel with context.
 
     """
-    session["user_current_panel"] = "posts"
+    session["last_visited"] = request.base_url
     logger_utils.backstage(username=current_user.username, panel="posts")
 
     current_page = request.args.get("page", default=1, type=int)
@@ -109,7 +109,7 @@ def projects_panel() -> str:
         str: Rendered template of the projects panel with context.
 
     """
-    session["user_current_panel"] = "projects"
+    session["last_visited"] = request.base_url
     logger_utils.backstage(username=current_user.username, panel="projects")
 
     current_page = request.args.get("page", default=1, type=int)
@@ -155,7 +155,7 @@ def archive_panel() -> str:
         str: Rendered template of the archive panel with context.
 
     """
-    session["user_current_panel"] = "archive"
+    session["last_visited"] = request.base_url
     logger_utils.backstage(username=current_user.username, panel="archive")
 
     with mongo_connection() as mongodb:
@@ -190,7 +190,7 @@ def changelog_panel() -> str:
         str: The rendered HTML template for the changelog panel.
 
     """
-    session["user_current_panel"] = "changelog"
+    session["last_visited"] = request.base_url
     logger_utils.backstage(username=current_user.username, panel="changelog")
 
     current_page = request.args.get("page", default=1, type=int)
@@ -235,7 +235,7 @@ def theme_panel() -> str:
         str: Rendered template of the theme settings panel with context.
 
     """
-    session["user_current_panel"] = "theme"
+    session["last_visited"] = request.base_url
     logger_utils.backstage(username=current_user.username, panel="theme")
 
     with mongo_connection() as mongodb:
@@ -256,7 +256,7 @@ def settings_panel() -> str:
         str: Rendered template of the settings panel with context.
 
     """
-    session["user_current_panel"] = "settings"
+    session["last_visited"] = request.base_url
     logger_utils.backstage(username=current_user.username, panel="settings")
 
     with mongo_connection() as mongodb:
@@ -588,10 +588,9 @@ def toggle_archived() -> Response:
     This action is triggered by the botton over the post or project panel.
     When the action is done, it returns to the same panel where the action was triggered.
     """
-    content_type = request.args.get("type")
-
+    content = request.args.get("content")
     with mongo_connection() as mongodb:
-        if content_type == "post":
+        if content == "post":
             post_uid = request.args.get("uid")
             post_info = mongodb.post_info.find_one({"post_uid": post_uid})
 
@@ -621,7 +620,7 @@ def toggle_archived() -> Response:
                 f"Archive status for post {post_uid} is now set to {updated_archived_status}."
             )
 
-        elif content_type == "project":
+        elif content == "project":
             project_uid = request.args.get("uid")
             project_info = mongodb.project_info.find_one({"project_uid": project_uid})
             title_sliced = slicing_title(project_info.get("title"), max_len=20)
@@ -644,7 +643,7 @@ def toggle_archived() -> Response:
                 f"Archive status for project {project_uid} is now set to {updated_archived_status}."
             )
 
-        elif content_type == "changelog":
+        elif content == "changelog":
             changelog_uid = request.args.get("uid")
             changelog = mongodb.changelog.find_one({"changelog_uid": changelog_uid})
             title_sliced = slicing_title(changelog.get("title"), max_len=20)
@@ -667,13 +666,16 @@ def toggle_archived() -> Response:
                 f"Archive status for changelog {changelog_uid} is now set to {updated_archived_status}."
             )
 
-    redirect_mapping = {
-        "posts": redirect(url_for("backstage.posts_panel")),
-        "archive": redirect(url_for("backstage.archive_panel")),
-        "projects": redirect(url_for("backstage.projects_panel")),
-        "changelog": redirect(url_for("backstage.changelog_panel")),
-    }
-    return redirect_mapping.get(session["user_current_panel"])
+    # redirect mapping
+    last_visited = session["last_visited"]
+    if "posts" in last_visited:
+        return redirect(url_for("backstage.posts_panel"))
+    elif "projects" in last_visited:
+        return redirect(url_for("backstage.projects_panel"))
+    elif "changelog" in last_visited:
+        return redirect(url_for("backstage.changelog_panel"))
+    elif "archive" in last_visited:
+        return redirect(url_for("backstage.archive_panel"))
 
 
 @backstage.route("/delete/post", methods=["GET"])

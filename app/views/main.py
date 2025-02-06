@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import bcrypt
 from flask import (
     Blueprint,
+    Response,
     flash,
     make_response,
     redirect,
@@ -11,7 +12,7 @@ from flask import (
     session,
     url_for,
 )
-from flask_login import current_user, login_user
+from flask_login import current_user, login_required, login_user, logout_user
 
 from app.config import DOMAIN, ENV, TEMPLATE_FOLDER
 from app.forms.users import LoginForm, SignUpForm
@@ -121,6 +122,24 @@ def signup() -> str:
 
     flashing_if_errors(form.errors)
     return render_template("main/signup.html", form=form)
+
+
+@main.route("/logout", methods=["GET"])
+@login_required
+def logout() -> Response:
+    """
+    Logs out the user and redirects to the home page.
+    """
+    username = current_user.username
+    if "backstage" in session["last_visited"]:
+        logout_redirect = redirect(url_for("frontstage.home", username=username))
+    else:
+        logout_redirect = redirect(session["last_visited"])
+    logout_user()
+    logger_utils.logout(request=request, username=username)
+    session.clear()
+
+    return logout_redirect
 
 
 @main.route("/raise-exception", methods=["GET"])

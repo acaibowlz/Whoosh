@@ -10,6 +10,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    session,
     url_for,
 )
 from flask_login import current_user
@@ -46,7 +47,10 @@ def home(username: str) -> str:
     Returns:
         str: Rendered HTML of the home page.
     """
+    if current_user.is_authenticated:
+        session["last_visited"] = request.base_url
     logger_utils.page_visited(request)
+
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
             logger.debug(f"Invalid username {username}.")
@@ -72,7 +76,10 @@ def blog(username: str) -> str:
     Returns:
         str: Rendered HTML of the blog page.
     """
+    if current_user.is_authenticated:
+        session["last_visited"] = request.base_url
     logger_utils.page_visited(request)
+
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
             logger.debug(f"Invalid username {username}.")
@@ -110,7 +117,10 @@ def blogpost(username: str, post_uid: str, request: Request) -> str:
     Returns:
         str: Rendered HTML of the blog post page.
     """
+    if current_user.is_authenticated:
+        session["last_visited"] = request.base_url
     logger_utils.page_visited(request)
+
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": username})
         post_utils = PostUtils(mongodb)
@@ -222,7 +232,10 @@ def tag(username: str) -> str:
     Returns:
         str: Rendered HTML of the tag page.
     """
+    if current_user.is_authenticated:
+        session["last_visited"] = request.base_url
     logger_utils.page_visited(request)
+
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
             logger.debug(f"Invalid username {username}.")
@@ -265,7 +278,10 @@ def gallery(username: str) -> str:
     Returns:
         str: Rendered HTML of the gallery page.
     """
+    if current_user.is_authenticated:
+        session["last_visited"] = request.base_url
     logger_utils.page_visited(request)
+
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
             logger.debug(f"Invalid username {username}.")
@@ -308,7 +324,10 @@ def project(username: str, project_uid: str, request: Request) -> str:
     Returns:
         str: Rendered HTML of the project page.
     """
+    if current_user.is_authenticated:
+        session["last_visited"] = request.base_url
     logger_utils.page_visited(request)
+
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": username})
         projects_utils = ProjectsUtils(mongodb)
@@ -407,7 +426,10 @@ def changelog(username: str) -> str:
     Returns:
         str: Rendered HTML of the changelog page.
     """
+    if current_user.is_authenticated:
+        session["last_visited"] = request.base_url
     logger_utils.page_visited(request)
+
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
             logger.debug(f"Invalid username {username}.")
@@ -436,6 +458,8 @@ def about(username: str) -> str:
     Returns:
         str: Rendered HTML of the about page.
     """
+    if current_user.is_authenticated:
+        session["last_visited"] = request.base_url
     logger_utils.page_visited(request)
 
     with mongo_connection() as mongodb:
