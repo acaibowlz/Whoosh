@@ -26,10 +26,10 @@ main = Blueprint("main", __name__, template_folder=TEMPLATE_FOLDER)
 
 
 def flashing_if_errors(form_errors: dict[str, list[str]]) -> None:
-    """Flash error messages if form validation errors exist.
+    """
+    Takes `form.errors` as argument, where `form` should be a WTForm instance.
 
-    Args:
-        form_errors (dict[str, list[str]]): Pass in a form.errors from a wtform class.
+    Flashs error message if any error is found in the form.
     """
     if form_errors:
         for field, errors in form_errors.items():
@@ -39,10 +39,8 @@ def flashing_if_errors(form_errors: dict[str, list[str]]) -> None:
 
 @main.route("/", methods=["GET"])
 def landing_page() -> str:
-    """Render the landing page.
-
-    Returns:
-        str: Rendered HTML of the landing page.
+    """
+    The landing page of the website. Takes GET request only.
     """
     logger_utils.page_visited(request)
     return render_template("main/landing-page.html")
@@ -50,18 +48,18 @@ def landing_page() -> str:
 
 @main.route("/login", methods=["GET", "POST"])
 def login() -> str:
-    """Handle user login.
+    """
+    The login page of the website. Takes GET and POST requests.
 
-    Handles both GET and POST requests. If the user is already authenticated, redirects to the home page.
-    On POST request, validates login form, checks credentials, and logs in the user.
+    When logging in the user, it also initializes the session keys `user_last_active` and `user_keep_alive`.
+    They are is used in the before-request-function `logout_inactive()` defined in `create_app()`.
 
-    Returns:
-        str: Rendered HTML of the login page or redirect to the home page on success.
+    If the user is already logged in, they will be redirected to the backstage.
     """
     if current_user.is_authenticated:
         flash("You are already logged in.")
         logger.debug(f"Attempt to duplicate logging from user {current_user.username}.")
-        return redirect(url_for("frontstage.home", username=current_user.username))
+        return redirect(url_for("baskstage.root", username=current_user.username))
 
     form = LoginForm()
 
@@ -102,12 +100,10 @@ def login() -> str:
 
 @main.route("/signup", methods=["GET", "POST"])
 def signup() -> str:
-    """Handle user sign-up.
+    """
+    The sign up page of the website. Takes GET and POST requests.
 
-    Handles both GET and POST requests. On POST request, validates sign-up form and creates a new user.
-
-    Returns:
-        str: Rendered HTML of the sign-up page or redirect to the login page on success.
+    This page associates with `SignUpForm` class and uses `create_user()` method from `UserUtils` class.
     """
     logger_utils.page_visited(request)
     form = SignUpForm()
@@ -128,7 +124,7 @@ def signup() -> str:
 @login_required
 def logout() -> Response:
     """
-    Logs out the user and redirects to the home page.
+    Logs out the user and redirects to the last visited page.
     """
     username = current_user.username
     if "backstage" in session["last_visited"]:
@@ -144,40 +140,34 @@ def logout() -> Response:
 
 @main.route("/raise-exception", methods=["GET"])
 def error_simulator() -> None:
-    """Simulate an error by raising an exception.
-
-    Raises:
-        Exception: Always raised to simulate an error.
+    """
+    This is a simulated error route for debug purpose only.
     """
     raise Exception("this is a simulation error.")
 
 
 @main.route("/error", methods=["GET"])
 def error_page() -> str:
-    """Render the error page.
-
-    Returns:
-        str: Rendered HTML of the error page.
+    """
+    The error page of the website.
     """
     return render_template("main/500.html")
 
 
 @main.route("/robots.txt", methods=["GET"])
 def robotstxt() -> str:
-    """Serve the robots.txt file.
-
-    Returns:
-        str: Content of the robots.txt file.
+    """
+    Serve the robots.txt file of the website.
     """
     return open("robots.txt", "r").read()
 
 
 @main.route("/sitemap")
 def sitemap() -> str:
-    """Generate and serve a sitemap of the website/application.
+    """
+    Generate the sitemap for the website.
 
-    Returns:
-        str: XML content of the sitemap.
+    It looks into the database and retrieves all users, posts and projects, then put them into the sitemap.
     """
     if ENV == "dev":
         base_url = f"{DOMAIN}"
