@@ -83,6 +83,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const postUid = document.getElementById("post-uid").dataset.postUid;
   setTimeout(() => sendReadCountRequest(postUid), 30000);
 
+  const commentTextarea = document.getElementById("comment");
+  commentTextarea.value = "";
+
   const form = document.getElementById("comment-form");
   form.addEventListener("keypress", preventFormEnter);
   setupTableOfContents();
