@@ -82,6 +82,16 @@ def create_app() -> Flask:
             session["user_keep_alive"] = False
             session["user_last_active"] = now
 
+    @app.before_request
+    def logging_request() -> None:
+        """
+        Logs the URL and client IP address before processing the request.
+        """
+        if "static" in request.url or "debug_toolbar" in request.url:
+            return
+        client_ip = return_client_ip(request, ENV)
+        logger.debug(f"{client_ip} - {request.url} was visited.")
+
     # Error handlers
     @app.errorhandler(404)
     def page_not_found(error) -> Tuple[str, int]:

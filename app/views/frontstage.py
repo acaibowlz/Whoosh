@@ -39,17 +39,11 @@ frontstage = Blueprint("frontstage", __name__, template_folder=TEMPLATE_FOLDER)
 
 @frontstage.route("/@<username>", methods=["GET"])
 def home(username: str) -> str:
-    """Render the home page for a given user.
-
-    Args:
-        username (str): The username of the user whose home page is to be rendered.
-
-    Returns:
-        str: Rendered HTML of the home page.
+    """
+    The main page for a given user. Shows the featured blog posts.
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
-    logger_utils.page_visited(request)
 
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
@@ -78,7 +72,6 @@ def blog(username: str) -> str:
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
-    logger_utils.page_visited(request)
 
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
@@ -119,7 +112,6 @@ def blogpost(username: str, post_uid: str, request: Request) -> str:
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
-    logger_utils.page_visited(request)
 
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": username})
@@ -234,7 +226,6 @@ def tag(username: str) -> str:
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
-    logger_utils.page_visited(request)
 
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
@@ -280,7 +271,6 @@ def gallery(username: str) -> str:
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
-    logger_utils.page_visited(request)
 
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
@@ -326,7 +316,6 @@ def project(username: str, project_uid: str, request: Request) -> str:
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
-    logger_utils.page_visited(request)
 
     with mongo_connection() as mongodb:
         user = mongodb.user_info.find_one({"username": username})
@@ -428,7 +417,6 @@ def changelog(username: str) -> str:
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
-    logger_utils.page_visited(request)
 
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):
@@ -460,7 +448,6 @@ def about(username: str) -> str:
     """
     if current_user.is_authenticated:
         session["last_visited"] = request.base_url
-    logger_utils.page_visited(request)
 
     with mongo_connection() as mongodb:
         if not mongodb.user_info.exists("username", username):

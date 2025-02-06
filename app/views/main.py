@@ -42,7 +42,6 @@ def landing_page() -> str:
     """
     The landing page of the website. Takes GET request only.
     """
-    logger_utils.page_visited(request)
     return render_template("main/landing-page.html")
 
 
@@ -94,7 +93,6 @@ def login() -> str:
         return redirect(url_for("backstage.root"))
 
     flashing_if_errors(form.errors)
-    logger_utils.page_visited(request)
     return render_template("main/login.html", form=form)
 
 
@@ -105,7 +103,6 @@ def signup() -> str:
 
     This page associates with `SignUpForm` class and uses `create_user()` method from `UserUtils` class.
     """
-    logger_utils.page_visited(request)
     form = SignUpForm()
 
     if form.validate_on_submit():

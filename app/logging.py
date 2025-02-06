@@ -9,13 +9,6 @@ from app.config import ENV
 def return_client_ip(request: Request, env: str) -> Optional[str]:
     """
     Returns the client's IP address based on the environment.
-
-    Args:
-        request (Request): The Flask request object.
-        env (str): The environment in which the application is running. Can be "debug" or "prod".
-
-    Returns:
-        Optional[str]: The client's IP address or None if not found.
     """
     if env == "dev":
         return request.remote_addr
@@ -27,7 +20,6 @@ def return_client_ip(request: Request, env: str) -> Optional[str]:
 def _setup_prod_logger() -> logging.Logger:
     """
     Sets up the production logger. Returns a logger instance.
-
     """
     logger = logger.getLogger("app")
     logger.setLevel(logging.DEBUG)
@@ -103,14 +95,6 @@ class LoggerUtils:
 
     def __init__(self, logger: logging.Logger) -> None:
         self._logger = logger
-
-    def page_visited(self, request: Request) -> None:
-        """
-        Logs that the current page was visited.
-        """
-        client_ip = return_client_ip(request, ENV)
-        page_url = request.environ.get("RAW_URI", "unknown")
-        self._logger.debug(f"{client_ip} - {page_url} was visited.")
 
     def login_failed(self, request: Request, msg: str) -> None:
         """
