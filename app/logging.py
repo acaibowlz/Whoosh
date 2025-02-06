@@ -21,7 +21,7 @@ def _setup_prod_logger() -> logging.Logger:
     """
     Sets up the production logger. Returns a logger instance.
     """
-    logger = logger.getLogger("app")
+    logger = logging.getLogger("app")
     logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(fmt="[%(asctime)s] %(levelname)s: %(message)s")
