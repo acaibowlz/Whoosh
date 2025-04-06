@@ -209,8 +209,8 @@ class UserUtils:
         Returns:
             str: The username of the newly created user.
         """
-        user_registration = NewUserSetup(form, self._db_handler)
-        return user_registration.create_user()
+        user_registration = NewUserSetup(self._db_handler)
+        return user_registration.create_user(form)
 
     def total_view_increment(self, username: str) -> None:
         """
