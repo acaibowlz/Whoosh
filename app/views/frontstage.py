@@ -30,7 +30,7 @@ from app.helpers.utils import (
     convert_project_content,
     sort_dict,
 )
-from app.logging import logger, logger_utils
+from app.logging import logger
 from app.mongo import mongo_connection
 from app.views.main import flashing_if_errors
 
@@ -254,7 +254,7 @@ def gallery(username: str) -> str:
         current_page = request.args.get("page", default=1, type=int)
         PROJECTS_EACH_PAGE = 12
         paging = Paging(mongodb)
-        pagination = paging.setup(username, "project_info", current_page, PROJECTS_EACH_PAGE)
+        pagination = paging.setup(username, "project", current_page, PROJECTS_EACH_PAGE)
 
         projects_utils = ProjectsUtils(mongodb)
         projects = projects_utils.get_project_infos_with_pagination(
