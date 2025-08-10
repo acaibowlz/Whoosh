@@ -65,7 +65,7 @@ def posts_panel() -> str:
         if form.validate_on_submit():
             post_uid = create_post(form, mongodb)
             if post_uid is not None:
-                logger.debug(f"Post {post_uid} has been created.")
+                logger.debug(f"User {current_user.username} has published a new post {post_uid}.")
                 flash("New post published successfully!", category="success")
         flashing_if_errors(form.errors)
 
@@ -105,7 +105,9 @@ def projects_panel() -> str:
         if form.validate_on_submit():
             project_uid = create_project(form, mongodb)
             if project_uid is not None:
-                logger.debug(f"Project {project_uid} has been created.")
+                logger.info(
+                    f"User {current_user.username} has published a new project {project_uid}."
+                )
                 flash("New project published successfully!", category="success")
         flashing_if_errors(form.errors)
         user = mongodb.user_info.find_one({"username": current_user.username})
@@ -170,7 +172,9 @@ def changelog_panel() -> str:
         if form.validate_on_submit():
             changelog_uid = create_changelog(form, mongodb)
             if changelog_uid is not None:
-                logger.debug(f"Changelog {changelog_uid} has been created.")
+                logger.info(
+                    f"User {current_user.username} has published a new changelog {changelog_uid}."
+                )
                 flash("New changelog published successfully!", category="success")
         flashing_if_errors(form.errors)
 
@@ -242,7 +246,7 @@ def settings_panel() -> str:
                     "changelog_enabled": form_general.changelog_enabled.data,
                 },
             )
-            logger.debug(f"General settings for {current_user.username} have been updated.")
+            logger.info(f"User {current_user.username} has updated his/her general settings.")
             flash("Update succeeded!", category="success")
             user = mongodb.user_info.find_one({"username": current_user.username})
 
@@ -266,7 +270,7 @@ def settings_panel() -> str:
                 filter={"username": current_user.username},
                 update={"social_links": updated_links},
             )
-            logger.debug(f"Social links for {current_user.username} have been updated.")
+            logger.info(f"User {current_user.username} has updated his/her social links.")
             flash("Social Links updated!", category="success")
             user = mongodb.user_info.find_one({"username": current_user.username})
 
@@ -276,7 +280,6 @@ def settings_panel() -> str:
             user_creds = mongodb.user_creds.find_one({"username": current_user.username})
             real_pw_encoded = user_creds.get("password").encode("utf-8")
             if not checkpw(current_pw_encoded, real_pw_encoded):
-                logger.debug("Invalid old password when changing password.")
                 flash("Invalid current password. Please try again.", category="error")
                 return render_template(
                     "backstage/settings.html",
@@ -293,9 +296,9 @@ def settings_panel() -> str:
                 filter={"username": current_user.username},
                 update={"password": new_pw_hashed},
             )
-            logger.debug(f"Password for user {current_user.username} has been updated.")
+            logger.info(f"User {current_user.username} has updated his/her password.")
             logout_user()
-            logger_utils.logout(request=request, username=username)
+            logger_utils.logout(request=request, username=current_user.username)
             session.clear()
             flash("Password update succeeded!", category="success")
             flash("Please log in again with your new password.", category="info")
@@ -326,7 +329,7 @@ def settings_panel() -> str:
             user_utils = UserUtils(mongodb)
             user_utils.delete_user(username, logger)
             flash("Account deleted successfully!", category="success")
-            logger.debug(f"User {username} has been deleted.")
+            logger.info(f"User {username} has been deleted.")
             return redirect(url_for("main.signup"))
 
     flashing_if_errors(form_general.errors)
@@ -373,7 +376,7 @@ def about_panel() -> str:
                 filter={"username": user.get("username")}, update=updated_about
             )
             about = updated_about.get("about")
-            logger.debug(f"Information for user {current_user.username} has been updated.")
+            logger.info(f"User {current_user.username} has updated his/her about page.")
             flash("Information updated!", category="success")
         flashing_if_errors(form.errors)
 
@@ -394,7 +397,7 @@ def edit_post(post_uid: str) -> str:
         form = EditPostForm()
         if form.validate_on_submit():
             update_post(post_uid, form, mongodb)
-            logger.debug(f"Post {post_uid} is updated.")
+            logger.info(f"User {current_user.username} has updated project {post_uid}.")
             title = mongodb.post_info.find_one({"post_uid": post_uid}).get("title")
             title_sliced = slicing_title(title, max_len=20)
             flash(f'Your post "{title_sliced}" has been updated!', category="success")
@@ -427,7 +430,7 @@ def edit_project(project_uid: str) -> str:
         form = EditProjectForm()
         if form.validate_on_submit():
             update_project(project_uid, form, mongodb)
-            logger.debug(f"Project {project_uid} is updated.")
+            logger.info(f"User {current_user.username} has updated project {project_uid}.")
             title_sliced = slicing_title(
                 mongodb.project_info.find_one({"project_uid": project_uid}).get("title"),
                 max_len=20,
@@ -459,7 +462,7 @@ def edit_changelog(changelog_uid: str) -> str:
         form = EditChangelogForm()
         if form.validate_on_submit():
             update_changelog(changelog_uid, form, mongodb)
-            logger.debug(f"Changelog {changelog_uid} is updated.")
+            logger.info(f"User {current_user.username} has updated project {changelog_uid}.")
             title_sliced = slicing_title(
                 mongodb.changelog.find_one({"changelog_uid": changelog_uid}).get("title"),
                 max_len=20,
@@ -492,12 +495,14 @@ def toggle_featured() -> Response:
 
         if request.args.get("featured") == "to_true":
             updated_featured_status = True
+            logger.info(f"User {current_user.username} has set a featured post {post_uid}.")
             flash(
                 f'Your post "{truncated_post_title}" is now featured on the home page!',
                 category="success",
             )
         else:
             updated_featured_status = False
+            logger.info(f"User {current_user.username} has unset a featured post {post_uid}.")
             flash(
                 f'Your post "{truncated_post_title}" is now removed from the home page!',
                 category="success",
@@ -505,9 +510,6 @@ def toggle_featured() -> Response:
 
         mongodb.post_info.update_values(
             filter={"post_uid": post_uid}, update={"featured": updated_featured_status}
-        )
-        logger.debug(
-            f"Featuring status for post {post_uid} is now set to {updated_featured_status}."
         )
 
     return redirect(url_for("backstage.posts_panel"))
@@ -534,10 +536,12 @@ def toggle_archived() -> Response:
 
             if request.args.get("archived") == "to_true":
                 updated_archived_status = True
+                logger.info(f"User {current_user.username} has archived a post {post_uid}.")
                 tags_increment = {f"tags.{tag}": -1 for tag in tags}
                 flash(f'Your post "{title_sliced}" is now archived!', category="success")
             else:
                 updated_archived_status = False
+                logger.info(f"User {current_user.username} has restored a post {post_uid}.")
                 tags_increment = {f"tags.{tag}": 1 for tag in tags}
                 flash(
                     f'Your post "{title_sliced}" is now restored from the archive!',
@@ -550,9 +554,6 @@ def toggle_archived() -> Response:
             mongodb.user_info.make_increments(
                 filter={"username": author}, increments=tags_increment, upsert=True
             )
-            logger.debug(
-                f"Archive status for post {post_uid} is now set to {updated_archived_status}."
-            )
 
         elif content == "project":
             project_uid = request.args.get("uid")
@@ -561,9 +562,11 @@ def toggle_archived() -> Response:
 
             if request.args.get("archived") == "to_true":
                 updated_archived_status = True
+                logger.info(f"User {current_user.username} has archived a project {project_uid}.")
                 flash(f'Your project "{title_sliced}" is now archived!', category="success")
             else:
                 updated_archived_status = False
+                logger.info(f"User {current_user.username} has restored a project {project_uid}.")
                 flash(
                     f'Your project "{title_sliced}" is now restored from the archive!',
                     category="success",
@@ -573,9 +576,6 @@ def toggle_archived() -> Response:
                 filter={"project_uid": project_uid},
                 update={"archived": updated_archived_status},
             )
-            logger.debug(
-                f"Archive status for project {project_uid} is now set to {updated_archived_status}."
-            )
 
         elif content == "changelog":
             changelog_uid = request.args.get("uid")
@@ -584,9 +584,15 @@ def toggle_archived() -> Response:
 
             if request.args.get("archived") == "to_true":
                 updated_archived_status = True
+                logger.info(
+                    f"User {current_user.username} has archived a changelog {changelog_uid}."
+                )
                 flash(f'Your changelog "{title_sliced}" is now archived!', category="success")
             else:
                 updated_archived_status = False
+                logger.info(
+                    f"User {current_user.username} has restored a changelog {changelog_uid}."
+                )
                 flash(
                     f'Your changelog "{title_sliced}" is now restored from the archive!',
                     category="success",
@@ -595,9 +601,6 @@ def toggle_archived() -> Response:
             mongodb.changelog.update_values(
                 filter={"changelog_uid": changelog_uid},
                 update={"archived": updated_archived_status},
-            )
-            logger.debug(
-                f"Archive status for changelog {changelog_uid} is now set to {updated_archived_status}."
             )
 
     # redirect mapping
@@ -625,7 +628,7 @@ def delete_post() -> Response:
         title_sliced = slicing_title(post_info.get("title"), max_len=20)
         mongodb.post_info.delete_one({"post_uid": post_uid})
         mongodb.post_content.delete_one({"post_uid": post_uid})
-    logger.debug(f"Post {post_uid} has been deleted.")
+    logger.info(f"User {current_user.username} has deleted a post {post_uid}.")
     flash(f'Your post "{title_sliced}" has been deleted!', category="success")
 
     return redirect(url_for("backstage.archive_panel"))
@@ -644,7 +647,7 @@ def delete_project() -> Response:
         title_sliced = slicing_title(project_info.get("title"), max_len=20)
         mongodb.project_info.delete_one({"project_uid": project_uid})
         mongodb.project_content.delete_one({"project_uid": project_uid})
-    logger.debug(f"Project {project_uid} has been deleted.")
+    logger.info(f"User {current_user.username} has deleted a project {project_uid}.")
     flash(f'Your project "{title_sliced}" has been deleted!', category="success")
 
     return redirect(url_for("backstage.archive_panel"))
@@ -662,7 +665,7 @@ def delete_changelog() -> Response:
         changelog = mongodb.changelog.find_one({"changelog_uid": changelog_uid})
         title_sliced = slicing_title(changelog.get("title"), max_len=20)
         mongodb.changelog.delete_one({"changelog_uid": changelog_uid})
-    logger.debug(f"Changelog {changelog_uid} has been deleted.")
+    logger.info(f"User {current_user.username} has deleted a changelog {changelog_uid}.")
     flash(f'Your changelog "{title_sliced}" has been deleted!', category="success")
 
     return redirect(url_for("backstage.archive_panel"))
