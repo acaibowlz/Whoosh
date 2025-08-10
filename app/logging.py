@@ -1,4 +1,5 @@
 import logging
+import sys
 from typing import Optional
 
 from flask import Request
@@ -24,10 +25,10 @@ def _setup_prod_logger() -> logging.Logger:
     logger = logging.getLogger("app")
     logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter(fmt="[%(asctime)s] %(levelname)s: %(message)s")
-    stream_handler = logging.StreamHandler()
+    formatter = logging.Formatter(fmt="%(levelname)s: %(message)s")
+    stream_handler = logging.StreamHandler(stream=sys.stdout)
     stream_handler.setFormatter(formatter)
-    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setLevel(logging.INFO)
     logger.addHandler(stream_handler)
     return logger
 
