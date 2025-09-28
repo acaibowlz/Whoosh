@@ -1,23 +1,8 @@
 /* base template */
-
-html,
-body {
-  height: 100vh;
-}
-
 body {
   font-family: "Ubuntu", "Noto Sans TC", sans-serif;
   min-height: 100vh;
-  /* background: #eee; */
   background-color: #f5f5f5;
-}
-
-.content-min-height {
-  flex: 1; /* This will make the content area grow to fill the available space */
-  min-height: calc(
-    100vh - var(--navbar-height, 0px) - var(--cover-height, 0px) -
-      var(--bottom-nav-height, 0px) - var(--footer-height, 0px)
-  );
 }
 
 .toast {
