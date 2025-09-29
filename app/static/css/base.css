@@ -10,8 +10,14 @@ body {
 }
 
 .content-min-height {
-  flex: 1; /* This will make the content area grow to fill the available space */
-  min-height: 30vh;
+  flex: 1; /* Default behavior */
+  min-height: 30vh; /* Default (for desktop) */
+}
+
+@media (max-width: 768px) {
+  .content-min-height {
+    min-height: 60vh; /* for mobile */
+  }
 }
 
 .toast {
