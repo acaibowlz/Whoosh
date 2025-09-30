@@ -157,14 +157,14 @@ class ExtendedCursor(Cursor):
         """
         Convert the cursor to a list of documents.
         """
-        self.__check_okay_to_chain()
+        self._check_okay_to_chain()
         return list(self)
 
-    def __check_okay_to_chain(self) -> None:
+    def _check_okay_to_chain(self) -> None:
         """
         Check if it is okay to chain more options onto this cursor.
         """
-        return super(ExtendedCursor, self)._Cursor__check_okay_to_chain()
+        return super(ExtendedCursor, self)._check_okay_to_chain()
 
 
 class Database:
