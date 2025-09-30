@@ -11,6 +11,7 @@ dependencies = [
     "flask-wtf>=1.2.2",
     "gunicorn>=23.0.0",
     "markdown>=3.9",
+    "markdown-captions>=2.1.2",
     "pymongo>=4.15.1",
     "python-dotenv>=1.1.1",
     "readtime>=3.0.0",

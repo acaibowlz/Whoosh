@@ -565,6 +565,15 @@ wheels = [
 ]
 
 [[package]]
+name = "markdown-captions"
+version = "2.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/81/1d/15ef64ed904c85d0520d632ec6844b7da886a45b0cb7970644be493181d0/markdown-captions-2.1.2.tar.gz", hash = "sha256:1c3ec0b674dd41a4c5f125724188c32a17bd46fd527db29f0c55a001e2d7abaf", size = 3031, upload-time = "2022-07-19T22:29:28.959Z" }
+
+[[package]]
 name = "markdown2"
 version = "2.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1093,6 +1102,7 @@ dependencies = [
     { name = "flask-wtf" },
     { name = "gunicorn" },
     { name = "markdown" },
+    { name = "markdown-captions" },
     { name = "pymongo" },
     { name = "python-dotenv" },
     { name = "readtime" },
@@ -1116,6 +1126,7 @@ requires-dist = [
     { name = "flask-wtf", specifier = ">=1.2.2" },
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "markdown", specifier = ">=3.9" },
+    { name = "markdown-captions", specifier = ">=2.1.2" },
     { name = "pymongo", specifier = ">=4.15.1" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
     { name = "readtime", specifier = ">=3.0.0" },
