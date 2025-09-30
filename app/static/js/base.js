@@ -101,58 +101,27 @@ function formatCounts() {
 }
 
 // Function to set content container height
-function setContentContainerHeight() {
+function setContentMinHeight() {
   const navbar = document.querySelector(".navbar");
   const cover = document.querySelector(".cover");
   const bottomNav = document.querySelector(".bottom-nav");
   const footer = document.querySelector(".footer");
 
-  if (navbar) {
-    document.documentElement.style.setProperty(
-      "--navbar-height",
-      `${navbar.offsetHeight}px`,
-    );
-  } else {
-    document.documentElement.style.setProperty("--navbar-height", "0px");
-  }
+  const navbarHeight = navbar ? navbar.offsetHeight : 0;
+  const coverHeight = cover ? cover.offsetHeight : 0;
+  const bottomNavHeight = bottomNav ? bottomNav.offsetHeight : 0;
+  const footerHeight = footer ? footer.offsetHeight : 0;
+  const totalHeights =
+    navbarHeight + coverHeight + bottomNavHeight + footerHeight;
 
-  if (cover) {
-    document.documentElement.style.setProperty(
-      "--cover-height",
-      `${cover.offsetHeight}px`,
-    );
-  } else {
-    document.documentElement.style.setProperty("--cover-height", "0px");
-  }
-
-  if (bottomNav) {
-    document.documentElement.style.setProperty(
-      "--bottom-nav-height",
-      `${bottomNav.offsetHeight}px`,
-    );
-  } else {
-    document.documentElement.style.setProperty("--bottom-nav-height", "0px");
-  }
-
-  if (footer) {
-    document.documentElement.style.setProperty(
-      "--footer-height",
-      `${footer.offsetHeight}px`,
-    );
-  } else {
-    document.documentElement.style.setProperty("--footer-height", "0px");
-  }
+  const content = document.querySelector(".content");
+  content.style.minHeight = `calc(102vh - ${totalHeights}px)`;
 }
 
-// Function to set cover container height
-function setCoverContainerHeight() {
-  const coverContainers = document.querySelectorAll(".cover-container");
-
-  coverContainers.forEach((container) => {
-    const width = container.clientWidth;
-    const height = (9 / 21) * width;
-    container.style.height = `${height}px`;
-  });
+function setCoverHeight() {
+  const cover = document.querySelector(".cover");
+  const width = cover.offsetWidth; // numeric width in px
+  cover.style.height = `${(9 / 21) * width}px`;
 }
 
 // Attach all event listeners and initializations inside DOMContentLoaded
@@ -161,9 +130,9 @@ document.addEventListener("DOMContentLoaded", function () {
   updateCurrentYear();
   convertUTCToLocal();
   formatCounts();
-  setCoverContainerHeight();
-  setContentContainerHeight();
+  setCoverHeight();
+  setContentMinHeight();
 
-  window.addEventListener("resize", setContentContainerHeight);
-  window.addEventListener("resize", setCoverContainerHeight);
+  window.addEventListener("resize", setCoverHeight);
+  window.addEventListener("resize", setContentMinHeight);
 });

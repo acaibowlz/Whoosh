@@ -1,63 +1,65 @@
 {% extends 'base.html' %}
-{% block title %}Gallery - {{ user.blogname }}{% endblock %}
-{% block meta_tags %}
-  <meta name="description" content="Whoosh, your all-in-1 blogging platform.">
-  <meta property="og:title" content="Gallery - {{ user.blogname }}">
-  <meta property="og:description"
-        content="Whoosh, your all-in-1 blogging platform.">
-  <meta property="og:image" content="{{ user.cover_url }}">
-  {% if "localhost" in request.host %}
-    <meta property="og:url"
-          content="{{ request.host }}{{ url_for(request.endpoint, **request.view_args) }}">
-  {% else %}
-    <meta property="og:url"
-          content="https://{{ request.host }}{{ url_for(request.endpoint, **request.view_args) }}">
-  {% endif %}
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Whoosh">
-  <meta name="twitter:card" content="summary_large_image">
-{% endblock %}
-{% block head %}
-  <link rel="stylesheet"
-        href="{{ url_for('static', filename='css/frontstage/gallery.css') }}" />
-{% endblock %}
-{% block body %}
-  {% include 'frontstage/navbar.html' %}
-  <div class="container-fluid">
-    <div class="row content-min-height">
-      <div class="col-lg-8 col-12 mx-auto">
-        <div class="my-3 pt-5 pb-4 text-center border-bottom">
-          <h1 class="disply-4 mb-3">Gallery</h1>
-          <h5 class="text-grey fw-light">Project showcases from {{ user.username }}.</h5>
-        </div>
-        <div class="row">
-          {% if projects | length != 0 %}
-            {% for project in projects %}
-              <div class="col-lg-4 col-12 my-4">
-                <a href="{{ url_for('frontstage.project_no_slug', username=user.username, project_uid=project.project_uid) }}">
-                  <div class="image-card shadow">
-                    <img data-src="{{ project.images[0][0] }}"
-                         alt="project cover"
-                         class="cover-image lazyload">
-                    <div class="overlay"></div>
-                    <div class="card-body">
-                      <h5 class="card-title text-white">{{ project.title }}</h5>
-                      <p class="card-text text-white">{{ project.short_description }}</p>
+{% block title %}
+  Gallery - {{ user.blogname }}{%
+  endblock %}
+  {% block meta_tags %}
+    <meta name="description" content="Whoosh, your all-in-1 blogging platform." />
+    <meta property="og:title" content="Gallery - {{ user.blogname }}" />
+    <meta property="og:description"
+          content="Whoosh, your all-in-1 blogging platform." />
+    <meta property="og:image" content="{{ user.cover_url }}" />
+    {% if "localhost" in request.host %}
+      <meta property="og:url"
+            content="{{ request.host }}{{ url_for(request.endpoint, **request.view_args) }}" />
+    {% else %}
+      <meta property="og:url"
+            content="https://{{ request.host }}{{ url_for(request.endpoint, **request.view_args) }}" />
+    {% endif %}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Whoosh" />
+    <meta name="twitter:card" content="summary_large_image" />
+  {% endblock %}
+  {% block head %}
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/frontstage/gallery.css') }}" />
+  {% endblock %}
+  {% block body %}
+    {% include 'frontstage/navbar.html' %}
+    <div class="container-fluid">
+      <div class="row content">
+        <div class="col-lg-8 col-12 mx-auto">
+          <div class="my-3 pt-5 pb-4 text-center border-bottom">
+            <h1 class="disply-4 mb-3">Gallery</h1>
+            <h5 class="text-grey fw-light">Project showcases from {{ user.username }}.</h5>
+          </div>
+          <div class="row">
+            {% if projects | length != 0 %}
+              {% for project in projects %}
+                <div class="col-lg-4 col-12 my-4">
+                  <a href="{{ url_for('frontstage.project_no_slug', username=user.username, project_uid=project.project_uid) }}">
+                    <div class="image-card shadow">
+                      <img data-src="{{ project.images[0][0] }}"
+                           alt="project cover"
+                           class="cover-image lazyload" />
+                      <div class="overlay"></div>
+                      <div class="card-body">
+                        <h5 class="card-title text-white">{{ project.title }}</h5>
+                        <p class="card-text text-white">{{ project.short_description }}</p>
+                      </div>
                     </div>
-                  </div>
-                </a>
-              </div>
-            {% endfor %}
-          {% else %}
-            <h5 class="mt-4 ms-2 fw-bold text-dark-grey">No project published yet!</h5>
-          {% endif %}
+                  </a>
+                </div>
+              {% endfor %}
+            {% else %}
+              <h5 class="mt-4 ms-2 fw-bold text-dark-grey">No project published yet!</h5>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  {% include 'frontstage/footer.html' %}
-{% endblock %}
-{% block script %}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"
-          async=""></script>
-{% endblock %}
+    {% include 'frontstage/footer.html' %}
+  {% endblock %}
+  {% block script %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"
+            async=""></script>
+  {% endblock %}
