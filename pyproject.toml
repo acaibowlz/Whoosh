@@ -1,0 +1,26 @@
+[project]
+name = "whoosh"
+version = "0.1.0"
+description = "A minimal and independent blogging service/personal website"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "bcrypt>=5.0.0",
+    "flask>=3.1.2",
+    "flask-login>=0.6.3",
+    "flask-wtf>=1.2.2",
+    "markdown>=3.9",
+    "pymongo>=4.15.1",
+    "python-dotenv>=1.1.1",
+    "readtime>=3.0.0",
+    "requests>=2.32.5",
+    "typing-extensions>=4.15.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+    "djlint>=1.36.4",
+    "flask-debugtoolbar>=0.16.0",
+    "isort>=6.0.1",
+]

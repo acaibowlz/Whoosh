@@ -1,72 +1,72 @@
 #!/bin/bash
 cd "$(git rev-parse --show-toplevel)"
-source .dev/bin/activate
+source .venv/bin/activate
 reformat=false
 
 # Function to handle Python files
 handle_python_files() {
-    echo "[pre-commit] formatting $1..."
-    isort "$1" -q
-    black "$1" -l 100 -q
-    git add "$1"
+  echo "[pre-commit] formatting $1..."
+  isort "$1" -q
+  black "$1" -l 100 -q
+  git add "$1"
 }
 
 # Function to handle HTML files
 handle_html_files() {
-    echo "[pre-commit] formatting $1..."
-    djlint "$1" --reformat --indent 2 --quiet
-    git add "$1"
+  echo "[pre-commit] formatting $1..."
+  djlint "$1" --reformat --indent 2 --quiet
+  git add "$1"
 }
 
 # Function to handle CSS files
 handle_css_files() {
-    echo "[pre-commit] formatting $1..."
-    prettier "$1" -w --log-level silent
-    git add "$1"
+  echo "[pre-commit] formatting $1..."
+  prettier "$1" -w --log-level silent
+  git add "$1"
 }
 
 handle_js_files() {
-    echo "[pre-commit] formatting $1..."
-    prettier "$1" -w --log-level silent
-    git add "$1"
+  echo "[pre-commit] formatting $1..."
+  prettier "$1" -w --log-level silent
+  git add "$1"
 }
 
 handle_md_files() {
-    echo "[pre-commit] formatting $1..."
-    prettier "$1" -w --log-level silent
-    git add "$1"
+  echo "[pre-commit] formatting $1..."
+  prettier "$1" -w --log-level silent
+  git add "$1"
 }
 
 # Read git diff output line by line
 while read -r line; do
-    # Get file status and name
-    file_status=$(echo "$line" | awk '{print $1}')
-    file_name=$(echo "$line" | awk '{print $2}')
+  # Get file status and name
+  file_status=$(echo "$line" | awk '{print $1}')
+  file_name=$(echo "$line" | awk '{print $2}')
 
-    # Check if the file is added (A) or modified (M)
-    if [[ "$file_status" == "A" || "$file_status" == "M" ]]; then
-        reformat=true
-        case "$file_name" in
-        *.py)
-            handle_python_files "$file_name"
-            ;;
-        *.html)
-            handle_html_files "$file_name"
-            ;;
-        *.css)
-            handle_css_files "$file_name"
-            ;;
-        *.js)
-            handle_js_files "$file_name"
-            ;;
-        *.md)
-            handle_md_files "$file_name"
-            ;;
-        esac
-    fi
+  # Check if the file is added (A) or modified (M)
+  if [[ "$file_status" == "A" || "$file_status" == "M" ]]; then
+    reformat=true
+    case "$file_name" in
+    *.py)
+      handle_python_files "$file_name"
+      ;;
+    *.html)
+      handle_html_files "$file_name"
+      ;;
+    *.css)
+      handle_css_files "$file_name"
+      ;;
+    *.js)
+      handle_js_files "$file_name"
+      ;;
+    *.md)
+      handle_md_files "$file_name"
+      ;;
+    esac
+  fi
 done < <(git diff --cached --name-status | grep -E '\.(py|html|css|js)$')
 
 if [ "$reformat" == "true" ]; then
-    echo "[pre-commit] done"
-    echo ""
+  echo "[pre-commit] done"
+  echo ""
 fi
