@@ -1,7 +1,3 @@
 User-agent: *
-Disallow: /logout
-Disallow: /backstage/
-Disallow: /error
-Disallow: /raise-exception
-
-Sitemap: https://whoosh.blog/sitemap
+Allow: /
+Sitemap: https://whoosh.blog/sitemap.xml

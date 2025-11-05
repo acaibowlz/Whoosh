@@ -156,10 +156,12 @@ def robotstxt() -> str:
     """
     Serve the robots.txt file of the website.
     """
-    return open("robots.txt", "r").read()
+    with open("robots.txt", "r", encoding="utf-8") as f:
+        content = f.read()
+    return Response(content, mimetype="text/plain")
 
 
-@main.route("/sitemap")
+@main.route("/sitemap.xml")
 def sitemap() -> str:
     """
     Generate the sitemap for the website.
@@ -171,28 +173,57 @@ def sitemap() -> str:
     else:
         base_url = f"https://{DOMAIN}"
 
-    # Static routes
-    static_urls = [{"loc": f"{base_url}/{route}"} for route in ["", "login", "register"]]
+    today = datetime.today().date()
+    urls = [
+        {"loc": f"{base_url}/", "lastmod": today, "changefreq": "daily", "priority": 1},
+    ]
 
-    # Dynamic routes
     with mongo_connection() as mongodb:
         user_utils = UserUtils(mongodb)
         post_utils = PostUtils(mongodb)
         projects_utils = ProjectsUtils(mongodb)
 
-        dynamic_urls = []
         for username in user_utils.get_all_username():
-            dynamic_urls.extend(
+            urls.extend(
                 [
-                    {"loc": f"{base_url}/@{username}"},
-                    {"loc": f"{base_url}/@{username}/blog"},
-                    {"loc": f"{base_url}/@{username}/about"},
+                    {
+                        "loc": f"{base_url}/@{username}",
+                        "lastmod": today,
+                        "changefreq": "monthly",
+                        "priority": 0.6,
+                    },
+                    {
+                        "loc": f"{base_url}/@{username}/blog",
+                        "lastmod": today,
+                        "changefreq": "monthly",
+                        "priority": 0.6,
+                    },
+                    {
+                        "loc": f"{base_url}/@{username}/about",
+                        "lastmod": today,
+                        "changefreq": "monthly",
+                        "priority": 0.6,
+                    },
                 ]
             )
         for username in user_utils.get_all_username_gallery_enabled():
-            dynamic_urls.append({"loc": f"{base_url}/@{username}/gallery"})
+            urls.append(
+                {
+                    "loc": f"{base_url}/@{username}/gallery",
+                    "lastmod": today,
+                    "changefreq": "monthly",
+                    "priority": 0.6,
+                }
+            )
         for username in user_utils.get_all_username_changelog_enabled():
-            dynamic_urls.append({"loc": f"{base_url}/@{username}/changelog"})
+            urls.append(
+                {
+                    "loc": f"{base_url}/@{username}/changelog",
+                    "lastmod": today,
+                    "changefreq": "monthly",
+                    "priority": 0.6,
+                }
+            )
 
         for post in post_utils.get_all_posts_info():
             slug = post.get("custom_slug")
@@ -205,12 +236,13 @@ def sitemap() -> str:
             url = {
                 "loc": f"{base_url}/@{post.get('author')}/posts/{post.get('post_uid')}/{slug if slug else ''}",
                 "lastmod": lastmod,
+                "changefreq": "monthly",
+                "priority": 0.6,
             }
-            dynamic_urls.append(url)
+            urls.append(url)
 
         for project in projects_utils.get_all_projects_info():
             slug = project.get("custom_slug")
-            logger.debug(project.get("last_updated"))
             lastmod = (
                 project.get("last_updated")
                 .replace(tzinfo=timezone.utc)
@@ -221,11 +253,9 @@ def sitemap() -> str:
                 "loc": f"{base_url}/@{project.get('author')}/projects/{project.get('project_uid')}/{slug if slug else ''}",
                 "lastmod": lastmod,
             }
-            dynamic_urls.append(url)
+            urls.append(url)
 
-    xml_sitemap = render_template(
-        "main/sitemap.xml", static_urls=static_urls, dynamic_urls=dynamic_urls
-    )
+    xml_sitemap = render_template("main/sitemap.xml", urls=urls)
     response = make_response(xml_sitemap)
     response.headers["Content-Type"] = "application/xml"
     logger.debug("Sitemap generated successfully.")
