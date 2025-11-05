@@ -135,22 +135,6 @@ def logout() -> Response:
     return logout_redirect
 
 
-@main.route("/raise-exception", methods=["GET"])
-def error_simulator() -> None:
-    """
-    This is a simulated error route for debug purpose only.
-    """
-    raise Exception("this is a simulation error.")
-
-
-@main.route("/error", methods=["GET"])
-def error_page() -> str:
-    """
-    The error page of the website.
-    """
-    return render_template("main/500.html")
-
-
 @main.route("/robots.txt", methods=["GET"])
 def robotstxt() -> str:
     """
