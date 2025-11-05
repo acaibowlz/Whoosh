@@ -57,7 +57,7 @@ function convertUTCToLocal() {
     const elements = document.querySelectorAll("." + className);
     elements.forEach((element) => {
       const utcDateString = element.textContent.trim();
-      const date = new Date(utcDateString + "Z"); // Adding 'Z' to specify UTC
+      const date = new Date(utcDateString);
 
       if (className === "utc-to-local-long") {
         const optionsDate = {
